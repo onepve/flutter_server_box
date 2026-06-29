@@ -1,8 +1,8 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_client.dart';
+import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_engine.dart';
 import 'package:server_box/sync/sync_provider.dart';
 
