@@ -9,6 +9,7 @@ abstract final class SyncConfig {
 
   /// API 端点
   static const _base = '/api';
+  static const register = '$_base/auth/register';
   static const login = '$_base/auth/login';
   static const profile = '$_base/auth/profile';
   static const forgotPassword = '$_base/auth/forgot-password';

@@ -313,15 +313,24 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             controller: totpCtrl,
           ),
           UIs.height7,
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                context.pop();
-                _showForgotPasswordDialog(context);
-              },
-              child: const Text('忘记密码？', style: TextStyle(fontSize: 13)),
-            ),
+          Row(
+            children: [
+              TextButton(
+                onPressed: () {
+                  context.pop();
+                  _showRegisterDialog(context);
+                },
+                child: const Text('没有账号？注册', style: TextStyle(fontSize: 13)),
+              ),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  context.pop();
+                  _showForgotPasswordDialog(context);
+                },
+                child: const Text('忘记密码？', style: TextStyle(fontSize: 13)),
+              ),
+            ],
           ),
         ],
       ),
@@ -521,6 +530,160 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
     controller.dispose();
     return null;
+  }
+
+  // ── 注册 ──
+
+  Future<void> _showRegisterDialog(BuildContext context) async {
+    final usernameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final passwordCtrl = TextEditingController();
+    final inviteCodeCtrl = TextEditingController();
+    final usernameNode = FocusNode();
+    final emailNode = FocusNode();
+    final passwordNode = FocusNode();
+    final inviteCodeNode = FocusNode();
+
+    final result = await context.showRoundDialog<bool>(
+      title: '注册同步账号',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '需要邀请码才能注册，请联系管理员获取',
+            style: UIs.textGrey,
+          ),
+          UIs.height13,
+          Input(
+            label: '用户名',
+            controller: usernameCtrl,
+            node: usernameNode,
+            onSubmitted: (_) => emailNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '邮箱地址',
+            controller: emailCtrl,
+            node: emailNode,
+            keyboardType: TextInputType.emailAddress,
+            onSubmitted: (_) => passwordNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '密码',
+            controller: passwordCtrl,
+            node: passwordNode,
+            obscureText: true,
+            onSubmitted: (_) => inviteCodeNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '邀请码',
+            controller: inviteCodeCtrl,
+            node: inviteCodeNode,
+            onSubmitted: (_) => context.pop(true),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(false),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: () => context.pop(true),
+          child: const Text('注册'),
+        ),
+      ],
+    );
+
+    if (result == true) {
+      final username = usernameCtrl.text.trim();
+      final email = emailCtrl.text.trim();
+      final password = passwordCtrl.text.trim();
+      final inviteCode = inviteCodeCtrl.text.trim();
+
+      if (username.isEmpty || email.isEmpty || password.isEmpty || inviteCode.isEmpty) {
+        context.showSnackBar('请填写所有字段');
+        usernameCtrl.dispose();
+        emailCtrl.dispose();
+        passwordCtrl.dispose();
+        inviteCodeCtrl.dispose();
+        usernameNode.dispose();
+        emailNode.dispose();
+        passwordNode.dispose();
+        inviteCodeNode.dispose();
+        return;
+      }
+
+      try {
+        final resp = await context.showLoadingDialog(
+          fn: () => SyncClient.shared.register(
+            username: username,
+            email: email,
+            password: password,
+            inviteCode: inviteCode,
+          ),
+        );
+
+        if (resp.$1 != null) {
+          if (resp.$1!.recoveryKey != null) {
+            final key = resp.$1!.recoveryKey!;
+
+            await context.showRoundDialog(
+              title: '注册成功',
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('账号注册成功！'),
+                  UIs.height13,
+                  const Text('请保存好以下 Recovery Key，用于：'),
+                  const Text('• 忘记 TOTP 设备时恢复账号'),
+                  const Text('• 在验证码失效时登录'),
+                  UIs.height7,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: SelectableText(
+                      key,
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+                    ),
+                  ),
+                  UIs.height7,
+                  const Text('此密钥仅显示一次，请立即记录！',
+                    style: TextStyle(color: Colors.red, fontSize: 12)),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: const Text('知道了'),
+                ),
+              ],
+            );
+          } else {
+            context.showSnackBar(resp.$1!.message);
+          }
+        } else {
+          context.showSnackBar('注册失败: ${resp.$2}');
+        }
+      } catch (e) {
+        context.showSnackBar('网络错误: $e');
+      }
+    }
+
+    usernameCtrl.dispose();
+    emailCtrl.dispose();
+    passwordCtrl.dispose();
+    inviteCodeCtrl.dispose();
+    usernameNode.dispose();
+    emailNode.dispose();
+    passwordNode.dispose();
+    inviteCodeNode.dispose();
   }
 
   // ── 忘记密码 ──
