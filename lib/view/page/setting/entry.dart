@@ -32,6 +32,7 @@ import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
 import 'package:server_box/view/page/setting/seq/srv_seq.dart';
 import 'package:server_box/view/page/setting/seq/virt_key.dart';
+import 'package:server_box/sync/sync_ui.dart';
 
 part 'about.dart';
 part 'entries/ai.dart';
@@ -42,6 +43,7 @@ part 'entries/full_screen.dart';
 part 'entries/server.dart';
 part 'entries/sftp.dart';
 part 'entries/ssh.dart';
+part 'entries/sync.dart';
 
 const _kIconSize = 23.0;
 
@@ -167,6 +169,8 @@ final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
           _buildApp(),
           CenterGreyTitle(l10n.ai),
           _buildAskAiConfig(),
+          CenterGreyTitle('同步'),
+          _buildServerSync(),
         ],
         [CenterGreyTitle(libL10n.server), _buildServer()],
         [
