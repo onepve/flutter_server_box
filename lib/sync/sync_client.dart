@@ -136,6 +136,36 @@ class SyncClient {
     _dio.close();
     _dio = _createDio();
   }
+
+  /// 忘记密码，获取重置令牌
+  Future<({String message, String? token})> forgotPassword({
+    required String email,
+  }) async {
+    final resp = await _dio.post(SyncConfig.forgotPassword, data: {
+      'email': email,
+    });
+    final data = resp.data as Map<String, dynamic>;
+    return (
+      message: data['message'] as String,
+      token: data['token'] as String?,
+    );
+  }
+
+  /// 使用重置令牌设置新密码
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await _dio.post(SyncConfig.resetPassword, data: {
+      'token': token,
+      'new_password': newPassword,
+    });
+  }
+
+  /// 删除指定类型的同步数据
+  Future<void> deleteData({required String dataType}) async {
+    await _dio.delete('${SyncConfig.syncDelete}/$dataType');
+  }
 }
 
 /// 服务器要求 TOTP 验证

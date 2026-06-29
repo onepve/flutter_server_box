@@ -82,13 +82,25 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           '服务端地址已固定，无需手动配置',
           style: UIs.textGrey,
         ),
-        trailing: syncState.syncing
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.chevron_right),
+        trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _helpBtn(
+                '登录',
+                '使用在同步管理平台注册的账号登录。\n\n'
+                '首次使用需要先通过邀请码注册账号。\n\n'
+                '如果开启了 TOTP 双因素认证，登录时需要额外输入 6 位动态验证码。',
+              ),
+              if (syncState.syncing)
+                const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                const Icon(Icons.chevron_right),
+            ],
+          ),
         onTap: syncState.syncing ? null : () => _showLoginDialog(context),
       ),
     );
@@ -100,6 +112,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         child: ListTile(
           leading: const Icon(Icons.logout),
           title: const Text('退出登录'),
+          trailing: _helpBtn(
+            '退出登录',
+            '清除本地保存的登录令牌（JWT Token），退出后需要重新登录才能同步。\n\n本机数据不会丢失。',
+          ),
           onTap: () async {
             await ref.read(syncNotifierProvider.notifier).logout();
             setState(() {});
@@ -124,6 +140,25 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             title: Text(syncState.error!, style: const TextStyle(color: Colors.red)),
           ),
         ),
+      CardX(
+        child: ListTile(
+          leading: const Icon(Icons.delete_forever, color: Colors.red),
+          title: Text('删除同步数据', style: const TextStyle(color: Colors.red)),
+          subtitle: Text(
+            '清空服务端加密数据',
+            style: UIs.textGrey,
+          ),
+          trailing: _helpBtn(
+            '删除同步数据',
+            '永久删除服务端存储的所有加密同步数据。\n\n'
+            '• 本机数据不受影响\n'
+            '• 删除后其他设备将无法下载数据\n'
+            '• 如需再次同步，需重新上传\n'
+            '• 此操作不可撤销！',
+          ),
+          onTap: () => _doDeleteData(context),
+        ),
+      ),
     ];
   }
 
@@ -141,13 +176,26 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
               '智能判断上传或下载，保持多设备一致',
               style: UIs.textGrey,
             ),
-            trailing: syncing
-                ? const SizedBox(
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _helpBtn(
+                  '一键同步',
+                  '自动检测服务端与本机的数据版本差异：\n\n'
+                  '• 如果服务端有更新的数据 → 下载到本机恢复\n'
+                  '• 如果本机数据更新或相同 → 将本机数据加密上传到服务端\n\n'
+                  '适合日常快速同步，无需手动选择方向。',
+                ),
+                if (syncing)
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.sync),
+                else
+                  const Icon(Icons.sync),
+              ],
+            ),
             onTap: syncing ? null : () => _doSync(context),
           ),
         ),
@@ -158,6 +206,13 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             subtitle: Text(
               '将本机数据加密上传到服务端',
               style: UIs.textGrey,
+            ),
+            trailing: _helpBtn(
+              '仅上传',
+              '将本机的服务器列表、SSH 密钥、容器配置等数据加密后上传到服务端，覆盖云端数据。\n\n'
+              '适用场景：\n'
+              '• 刚配置好新设备，把数据备份到云端\n'
+              '• 做了大量修改后主动推送最新数据',
             ),
             onTap: syncing ? null : () => _doUpload(context),
           ),
@@ -170,6 +225,14 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
               '从服务端下载数据并恢复到本机',
               style: UIs.textGrey,
             ),
+            trailing: _helpBtn(
+              '仅下载',
+              '从服务端下载加密数据并恢复到本机，覆盖本地数据。\n\n'
+              '适用场景：\n'
+              '• 换了新手机或新电脑，需要恢复之前的配置\n'
+              '• 误删了数据需要从云端恢复\n'
+              '• 想同步其他设备的服务器列表',
+            ),
             onTap: syncing ? null : () => _doDownload(context),
           ),
         ),
@@ -178,6 +241,26 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   // ── 关于 ──
+
+  Widget _helpBtn(String title, String detail) {
+    return IconButton(
+      icon: const Icon(Icons.help_outline, size: 18, color: Colors.grey),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      tooltip: '查看说明',
+      onPressed: () => _showHelp(context, title, detail),
+    );
+  }
+
+  Future<void> _showHelp(BuildContext context, String title, String detail) async {
+    await context.showRoundDialog(
+      title: title,
+      child: Text(detail, style: UIs.textGrey),
+      actions: [
+        TextButton(onPressed: () => context.pop(), child: const Text('知道了')),
+      ],
+    );
+  }
 
   Widget get _buildAboutItem {
     return CardX(
@@ -227,6 +310,17 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           Input(
             label: 'TOTP 验证码（可选）',
             controller: totpCtrl,
+          ),
+          UIs.height7,
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () {
+                context.pop();
+                _showForgotPasswordDialog(context);
+              },
+              child: const Text('忘记密码？', style: TextStyle(fontSize: 13)),
+            ),
           ),
         ],
       ),
@@ -426,5 +520,230 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
     controller.dispose();
     return null;
+  }
+
+  // ── 忘记密码 ──
+
+  Future<void> _showForgotPasswordDialog(BuildContext context) async {
+    final emailCtrl = TextEditingController();
+    final node = FocusNode();
+
+    final result = await context.showRoundDialog<bool>(
+      title: '忘记密码',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '输入注册邮箱，获取重置令牌',
+            style: UIs.textGrey,
+          ),
+          UIs.height13,
+          Input(
+            label: '邮箱地址',
+            controller: emailCtrl,
+            node: node,
+            keyboardType: TextInputType.emailAddress,
+            onSubmitted: (_) => context.pop(true),
+          ),
+        ],
+      ),
+      actions: Btnx.oks,
+    );
+
+    if (result == true) {
+      final email = emailCtrl.text.trim();
+      if (email.isEmpty) {
+        context.showSnackBar('请输入邮箱');
+        emailCtrl.dispose();
+        node.dispose();
+        return;
+      }
+
+      try {
+        final resp = await context.showLoadingDialog(
+          fn: () => SyncClient.shared.forgotPassword(email: email),
+        );
+
+        if (resp.$1 != null) {
+          final message = resp.$1!.message;
+
+          if (resp.$1!.token != null) {
+            // 自托管模式：直接拿到令牌，进入重置密码
+            final ok = await context.showRoundDialog<bool>(
+              title: '重置令牌已获取',
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(message, style: UIs.textGrey),
+                  UIs.height13,
+                  const Text('请立即使用此令牌重置密码，一小时内有效：'),
+                  UIs.height7,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: SelectableText(
+                      resp.$1!.token!,
+                      style: const TextStyle(fontFamily: 'monospace', fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(false),
+                  child: const Text('稍后重置'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    context.pop(true);
+                  },
+                  child: const Text('下一步：重置密码'),
+                ),
+              ],
+            );
+
+            if (ok == true) {
+              _showResetPasswordDialog(context, initialToken: resp.$1!.token);
+            }
+          } else {
+            // SMTP 模式：邮件已发送
+            context.showSnackBar(message);
+          }
+        } else {
+          context.showSnackBar('请求失败: ${resp.$2}');
+        }
+      } catch (e) {
+        context.showSnackBar('网络错误: $e');
+      }
+    }
+
+    emailCtrl.dispose();
+    node.dispose();
+  }
+
+  // ── 重置密码 ──
+
+  Future<void> _showResetPasswordDialog(
+    BuildContext context, {
+    String? initialToken,
+  }) async {
+    final tokenCtrl = TextEditingController(text: initialToken ?? '');
+    final pwdCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final tokenNode = FocusNode();
+    final pwdNode = FocusNode();
+    final confirmNode = FocusNode();
+
+    final result = await context.showRoundDialog<bool>(
+      title: '重置密码',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '输入重置令牌和新密码',
+            style: UIs.textGrey,
+          ),
+          UIs.height13,
+          Input(
+            label: '重置令牌',
+            controller: tokenCtrl,
+            node: tokenNode,
+            onSubmitted: (_) => pwdNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '新密码',
+            controller: pwdCtrl,
+            node: pwdNode,
+            obscureText: true,
+            onSubmitted: (_) => confirmNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '确认新密码',
+            controller: confirmCtrl,
+            node: confirmNode,
+            obscureText: true,
+            onSubmitted: (_) => context.pop(true),
+          ),
+        ],
+      ),
+      actions: Btnx.oks,
+    );
+
+    if (result == true) {
+      final token = tokenCtrl.text.trim();
+      final pwd = pwdCtrl.text.trim();
+      final confirm = confirmCtrl.text.trim();
+
+      if (token.isEmpty || pwd.isEmpty || confirm.isEmpty) {
+        context.showSnackBar('请填写所有字段');
+      } else if (pwd != confirm) {
+        context.showSnackBar('两次输入的密码不一致');
+      } else if (pwd.length < 8) {
+        context.showSnackBar('密码至少 8 位');
+      } else {
+        try {
+          await context.showLoadingDialog(
+            fn: () => SyncClient.shared.resetPassword(
+              token: token,
+              newPassword: pwd,
+            ),
+          );
+          context.showSnackBar('密码已重置成功，请使用新密码登录');
+        } catch (e) {
+          context.showSnackBar('重置失败: $e');
+        }
+      }
+    }
+
+    tokenCtrl.dispose();
+    pwdCtrl.dispose();
+    confirmCtrl.dispose();
+    tokenNode.dispose();
+    pwdNode.dispose();
+    confirmNode.dispose();
+  }
+
+  // ── 删除同步数据 ──
+
+  Future<void> _doDeleteData(BuildContext context) async {
+    final confirmed = await context.showRoundDialog<bool>(
+      title: '确认删除同步数据',
+      child: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '⚠ 此操作不可撤销！',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          Text('将永久删除服务端存储的所有加密同步数据：'),
+          SizedBox(height: 4),
+          Text('• 本机数据不受影响'),
+          Text('• 其他设备将无法下载数据'),
+          Text('• 如需再次同步需重新上传'),
+        ],
+      ),
+      actions: Btnx.cancelOk,
+    );
+    if (confirmed != true) return;
+
+    try {
+      await context.showLoadingDialog(
+        fn: () => SyncClient.shared.deleteData(
+          dataType: SyncConfig.dataType,
+        ),
+      );
+      context.showSnackBar('服务端同步数据已删除');
+      setState(() {});
+    } catch (e) {
+      context.showSnackBar('删除失败: $e');
+    }
   }
 }

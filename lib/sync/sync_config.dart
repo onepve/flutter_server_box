@@ -11,10 +11,13 @@ abstract final class SyncConfig {
   static const _base = '/api';
   static const login = '$_base/auth/login';
   static const profile = '$_base/auth/profile';
+  static const forgotPassword = '$_base/auth/forgot-password';
+  static const resetPassword = '$_base/auth/reset-password';
   static const syncUpload = '$_base/sync/upload';
   static const syncDownload = '$_base/sync/download';
   static const syncDiff = '$_base/sync/diff';
   static const syncStatus = '$_base/sync/status';
+  static const syncDelete = '$_base/sync';
 
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');
