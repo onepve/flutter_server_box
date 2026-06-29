@@ -213,8 +213,7 @@ jobs:
 
             # 打包 .deb
             dpkg-deb --build "${DEB_DIR}" "${DEB_NAME}.deb"
-            mv "${DEB_NAME}.deb" ../.. 2>/dev/null || true
-
+            ls -la "${DEB_NAME}.deb"
             echo "✅ .deb 打包完成: ${DEB_NAME}.deb"
           else
             echo "⚠️ 未找到 Linux bundle 目录，跳过 .deb 打包"
