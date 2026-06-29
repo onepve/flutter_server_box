@@ -565,7 +565,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             label: '邮箱地址',
             controller: emailCtrl,
             node: emailNode,
-            keyboardType: TextInputType.emailAddress,
             onSubmitted: (_) => passwordNode.requestFocus(),
           ),
           UIs.height7,
