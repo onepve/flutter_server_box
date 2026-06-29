@@ -2,6 +2,7 @@ import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/sync/sync_config.dart';
+import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_engine.dart';
 import 'package:server_box/sync/sync_provider.dart';
 
@@ -542,7 +543,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             label: '邮箱地址',
             controller: emailCtrl,
             node: node,
-            keyboardType: TextInputType.emailAddress,
             onSubmitted: (_) => context.pop(true),
           ),
         ],
