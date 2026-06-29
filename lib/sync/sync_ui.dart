@@ -271,7 +271,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         subtitle: Text(
           '数据端到端加密，服务端无法解密\n'
           '服务端地址: ${SyncConfig.serverUrl}',
-          style: UIs.textGrey,
+          style: UIs.textGrey.copyWith(fontSize: 12),
         ),
       ),
     );
@@ -291,7 +291,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('服务端地址: ${SyncConfig.serverUrl}', style: UIs.textGrey),
+          Text('服务端地址: ${SyncConfig.serverUrl}', style: UIs.textGrey.copyWith(fontSize: 12)),
           UIs.height13,
           Input(
             label: '用户名',
