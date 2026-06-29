@@ -137,6 +137,26 @@ class SyncClient {
     _dio = _createDio();
   }
 
+  /// 注册新账号
+  Future<({String message, String? recoveryKey})> register({
+    required String username,
+    required String email,
+    required String password,
+    required String inviteCode,
+  }) async {
+    final resp = await _dio.post(SyncConfig.register, data: {
+      'username': username,
+      'email': email,
+      'password': password,
+      'invite_code': inviteCode,
+    });
+    final data = resp.data as Map<String, dynamic>;
+    return (
+      message: data['message'] as String? ?? '注册成功',
+      recoveryKey: data['recovery_key'] as String?,
+    );
+  }
+
   /// 忘记密码，获取重置令牌
   Future<({String message, String? token})> forgotPassword({
     required String email,
