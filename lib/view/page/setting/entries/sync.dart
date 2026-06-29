@@ -2,7 +2,6 @@ part of '../entry.dart';
 
 extension _SyncSection on _AppSettingsPageState {
   Widget _buildServerSync() {
-    final l10n = context.l10n;
     return ListTile(
       leading: const Icon(Icons.cloud_sync, size: _kIconSize),
       title: const Text('服务器同步'),
