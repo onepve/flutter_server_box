@@ -185,7 +185,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         leading: const Icon(Icons.info_outline),
         title: const Text('服务端同步'),
         subtitle: Text(
-          '数据加密后上传，服务端零信任\n'
+          '数据端到端加密，服务端无法解密\n'
           '服务端地址: ${SyncConfig.serverUrl}',
           style: UIs.textGrey,
         ),
