@@ -40,6 +40,7 @@ abstract final class SyncConfig {
   static final nickname = SecureProp('sync_nickname');
   static final avatarUrl = SecureProp('sync_avatar_url');
   static final email = SecureProp('sync_email');
+  static final uuid = SecureProp('sync_uuid');  // 数据加密密钥，自动存储
   static final _deviceId = SecureProp('sync_device_id');
 
   /// 当前设备唯一标识（首次生成后持久化）

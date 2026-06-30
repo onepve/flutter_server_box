@@ -148,6 +148,7 @@ class SyncNotifier extends Notifier<SyncState> {
       );
       await SyncConfig.token.write(result.token);
       await SyncConfig.username.write(result.username);
+      await SyncConfig.uuid.write(result.uuid);  // 保存 UUID 作为加密密钥
       if (result.nickname != null) {
         await SyncConfig.nickname.write(result.nickname);
       }
@@ -174,21 +175,27 @@ class SyncNotifier extends Notifier<SyncState> {
     }
   }
 
-  /// 登出
+  /// 注销时清理本地缓存
   Future<void> logout() async {
     await SyncConfig.token.write(null);
     await SyncConfig.username.write(null);
     await SyncConfig.nickname.write(null);
     await SyncConfig.avatarUrl.write(null);
     await SyncConfig.email.write(null);
+    await SyncConfig.uuid.write(null);
     state = const SyncState();
   }
 
   /// 上传同步数据到服务端
-  Future<String?> upload({required String password}) async {
+  Future<String?> upload() async {
     state = state.copyWith(syncing: true, clearError: true);
     try {
-      final ciphertext = await SyncCrypto.buildSyncPayload(password);
+      final uuid = await SyncConfig.uuid.read();
+      if (uuid == null || uuid.isEmpty) {
+        state = state.copyWith(syncing: false, error: '未获取到加密密钥，请重新登录');
+        return '未获取到加密密钥';
+      }
+      final ciphertext = await SyncCrypto.buildSyncPayload(uuid);
       final plaintextSize = ciphertext.length;
 
       final serverVersion = await SyncClient.shared.upload(
@@ -213,11 +220,16 @@ class SyncNotifier extends Notifier<SyncState> {
   }
 
   /// 从服务端下载并恢复数据
-  Future<String?> download({required String password}) async {
+  Future<String?> download() async {
     state = state.copyWith(syncing: true, clearError: true);
     try {
+      final uuid = await SyncConfig.uuid.read();
+      if (uuid == null || uuid.isEmpty) {
+        state = state.copyWith(syncing: false, error: '未获取到加密密钥，请重新登录');
+        return '未获取到加密密钥';
+      }
       final data = await SyncClient.shared.download();
-      final backup = await SyncCrypto.parseSyncPayload(data.ciphertext, password);
+      final backup = await SyncCrypto.parseSyncPayload(data.ciphertext, uuid);
       await backup.merge();
 
       state = state.copyWith(

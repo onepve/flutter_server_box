@@ -42,7 +42,7 @@ class SyncClient {
   }
 
   /// 登录，获取 JWT Token
-  Future<({String token, int userId, String username, String? nickname, String? avatarUrl})> login({
+  Future<({String token, int userId, String uuid, String username, String? nickname, String? avatarUrl})> login({
     required String username,
     required String password,
     String? totpCode,
@@ -66,6 +66,7 @@ class SyncClient {
     return (
       token: token,
       userId: data['user_id'] as int,
+      uuid: data['uuid'] as String,
       username: data['username'] as String,
       nickname: data['nickname'] as String?,
       avatarUrl: data['avatar_url'] as String?,
