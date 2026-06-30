@@ -22,22 +22,38 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   @override
   Widget build(BuildContext context) {
     final syncState = ref.watch(syncNotifierProvider);
-    final body = SafeArea(
-      child: SingleChildScrollView(
-        child: MultiList(widthDivider: 2, children: [
-          [CenterGreyTitle('同步账号'), _buildLoginStatus(syncState),
-           if (!syncState.loggedIn) _buildLoginButton(syncState),
-           if (syncState.loggedIn) ..._buildLoggedInItems(syncState)],
-          [CenterGreyTitle('同步操作'),
-           if (syncState.loggedIn) _buildSyncButtons(syncState)],
-          if (widget.showComparison) ...[
-            [CenterGreyTitle('与内置备份方式对比'), _buildComparison()],
-            [CenterGreyTitle('使用建议'), _buildUsageTips()],
-          ] else
-            [CenterGreyTitle('关于'), _buildAboutItem],
-        ]),
-      ),
-    );
+    Widget body;
+    try {
+      body = SafeArea(
+        child: SingleChildScrollView(
+          child: MultiList(widthDivider: 2, children: [
+            [CenterGreyTitle('同步账号'), _buildLoginStatus(syncState),
+             if (!syncState.loggedIn) _buildLoginButton(syncState),
+             if (syncState.loggedIn) ..._buildLoggedInItems(syncState)],
+            [CenterGreyTitle('同步操作'),
+             if (syncState.loggedIn) _buildSyncButtons(syncState)],
+            if (widget.showComparison) ...[
+              [CenterGreyTitle('与内置备份方式对比'), _buildComparison()],
+              [CenterGreyTitle('使用建议'), _buildUsageTips()],
+            ] else
+              [CenterGreyTitle('关于'), _buildAboutItem],
+          ]),
+        ),
+      );
+    } catch (e) {
+      body = Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.error_outline, size: 40, color: Colors.orange),
+            const SizedBox(height: 10),
+            const Text('页面加载异常', style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 6),
+            Text('$e', style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
+          ]),
+        ),
+      );
+    }
 
     if (!widget.showAppBar) return body;
 
