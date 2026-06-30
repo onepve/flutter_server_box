@@ -756,7 +756,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
 
   Future<void> _doSync() async { final p = await _requirePwd(); if (p==null) return; final notifier = ref.read(syncNotifierProvider.notifier); final r = await context.showLoadingDialog(fn: ()=>SyncEngine.syncAll(p)); if (r.$1!=null) { context.showSnackBar(r.$1!); notifier.checkForUpdates(); setState((){}); } else if (r.$2!=null) { notifier.logout(); context.showSnackBar('同步失败: ${r.$2}'); } }
   Future<void> _doUpload() async { final p = await _requirePwd(); if (p==null) return; final notifier = ref.read(syncNotifierProvider.notifier); final e = await context.showLoadingDialog(fn: ()=>notifier.upload(password:p)); if (e.$1==null) context.showSnackBar('上传成功'); else context.showSnackBar('上传失败: ${e.$1}'); setState((){}); }
-  Future<void> _doDownload() async { final p = await _requirePwd(); if (p==null) return; final c = await context.showRoundDialog<bool>(title:'确认下载恢复', child: const Text('将从服务端下载数据并覆盖本地内容'), actions:Btx.cancelOk); if (c!=true) return; final e = await context.showLoadingDialog(fn: ()=>ref.read(syncNotifierProvider.notifier).download(password:p)); if (e.$1==null) context.showSnackBar('下载恢复成功'); else context.showSnackBar('下载失败: ${e.$1}'); setState((){}); }
+  Future<void> _doDownload() async { final p = await _requirePwd(); if (p==null) return; final c = await context.showRoundDialog<bool>(title:'确认下载恢复', child: const Text('将从服务端下载数据并覆盖本地内容'), actions:Btnx.cancelOk); if (c!=true) return; final e = await context.showLoadingDialog(fn: ()=>ref.read(syncNotifierProvider.notifier).download(password:p)); if (e.$1==null) context.showSnackBar('下载恢复成功'); else context.showSnackBar('下载失败: ${e.$1}'); setState((){}); }
 
   Future<String?> _requirePwd() async {
     final saved = await SecureStoreProps.bakPwd.read(); if (saved!=null && saved.isNotEmpty) return saved;
@@ -764,7 +764,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     final r = await context.showRoundDialog<bool>(title:'同步加密密码', child:Column(mainAxisSize:MainAxisSize.min,children:[
       Text('数据会用此密码加密后上传\n建议与登录密码相同',style:UIs.textGrey),UIs.height13,
       Input(label:'加密密码',controller:ctrl,obscureText:true,onSubmitted:(_)=>context.pop(true)),
-    ]),actions:Btx.oks);
+    ]),actions:Btnx.oks);
     if (r==true && ctrl.text.trim().isNotEmpty) { final p=ctrl.text.trim(); await SecureStoreProps.bakPwd.write(p); ctrl.dispose(); return p; }
     ctrl.dispose(); return null;
   }
