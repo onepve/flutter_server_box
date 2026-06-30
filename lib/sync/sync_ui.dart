@@ -9,7 +9,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// 服务端同步设置页面
 class ServerSyncPage extends ConsumerStatefulWidget {
-  const ServerSyncPage({super.key});
+  const ServerSyncPage({super.key, this.showAppBar = true, this.showComparison = false});
+  final bool showAppBar;
+  final bool showComparison;
   @override
   ConsumerState<ServerSyncPage> createState() => _ServerSyncPageState();
   static const route = AppRouteNoArg(page: ServerSyncPage.new, path: '/server-sync');
@@ -19,18 +21,28 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   @override
   Widget build(BuildContext context) {
     final syncState = ref.watch(syncNotifierProvider);
-    return Scaffold(
-      appBar: CustomAppBar(title: const Text('服务端同步')),
-      body: SafeArea(
+    final body = SafeArea(
+      child: SingleChildScrollView(
         child: MultiList(widthDivider: 2, children: [
           [CenterGreyTitle('同步账号'), _buildLoginStatus(syncState),
            if (!syncState.loggedIn) _buildLoginButton(syncState),
            if (syncState.loggedIn) ..._buildLoggedInItems(syncState)],
           [CenterGreyTitle('同步操作'),
            if (syncState.loggedIn) _buildSyncButtons(syncState)],
-          [CenterGreyTitle('关于'), _buildAboutItem],
+          if (widget.showComparison) ...[
+            [CenterGreyTitle('与内置备份方式对比'), _buildComparison()],
+            [CenterGreyTitle('使用建议'), _buildUsageTips()],
+          ] else
+            [CenterGreyTitle('关于'), _buildAboutItem],
         ]),
       ),
+    );
+
+    if (!widget.showAppBar) return body;
+
+    return Scaffold(
+      appBar: CustomAppBar(title: const Text('云同步')),
+      body: body,
     );
   }
 
@@ -501,6 +513,121 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     } catch (e) {
       context.showSnackBar('注销失败: $e');
     }
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  对比表格 & 使用建议
+  // ═══════════════════════════════════════════════════
+
+  Widget _buildComparison() {
+    return CardX(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 表头
+            _compRow(
+              isHeader: true,
+              children: const [
+                Expanded(flex: 3, child: Text('', style: TextStyle(fontWeight: FontWeight.w600))),
+                Expanded(flex: 4, child: Text('☁️ 云同步', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
+                Expanded(flex: 5, child: Text('📦 内置备份', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
+              ],
+            ),
+            const Divider(height: 1),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('触发方式', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('一键同步', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.blue))),
+              const Expanded(flex: 5, child: Text('手动导出/导入', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('加密方式', style: TextStyle(fontSize: 12))),
+              Expanded(flex: 4, child: Text('登录密码\nAES-256-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+              Expanded(flex: 5, child: Text('备份密码\nAES-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('多设备', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('✅ 登录即连', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+              const Expanded(flex: 5, child: Text('手动传输文件', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('存储位置', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('sync.onepve.com', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.blue))),
+              const Expanded(flex: 5, child: Text('WebDAV/Gist/本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 11))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('账号管理', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('✅ 注册/注销', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+              const Expanded(flex: 5, child: Text('无', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('数据恢复', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('✅ 导出到邮箱', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+              const Expanded(flex: 5, child: Text('本地文件恢复', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+            ]),
+            _compRow(children: [
+              const Expanded(flex: 3, child: Text('服务端知密', style: TextStyle(fontSize: 12))),
+              const Expanded(flex: 4, child: Text('❌ 零信任', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+              const Expanded(flex: 5, child: Text('❌ 仅文件加密', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+            ]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _compRow({required List<Widget> children, bool isHeader = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 0.5)),
+        color: isHeader ? Colors.grey.shade100 : null,
+      ),
+      child: Row(children: children),
+    );
+  }
+
+  Widget _buildUsageTips() {
+    return Column(children: [
+      CardX(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber.shade700),
+                const SizedBox(width: 6),
+                Text('推荐用法', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.amber.shade800)),
+              ]),
+              const SizedBox(height: 8),
+              _tip('日常多设备同步 → 使用云同步'),
+              _tip('换手机时迁移数据 → 云同步一键下载恢复'),
+              _tip('担心数据丢失 → 定期用 WebDAV/Gist 手动备份'),
+              _tip('两台都可同时使用，互不影响'),
+              const SizedBox(height: 6),
+              Row(children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Expanded(child: Text('云同步和内置备份使用不同的加密密码，数据格式通用，可以互相转换。',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
+              ]),
+            ],
+          ),
+        ),
+      ),
+    ]);
+  }
+
+  Widget _tip(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('• ', style: TextStyle(fontSize: 12)),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 12))),
+      ]),
+    );
   }
 
   // ═══════════════════════════════════════════════════

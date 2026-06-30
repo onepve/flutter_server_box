@@ -22,6 +22,7 @@ import 'package:server_box/data/res/url.dart';
 import 'package:server_box/data/store/setting.dart';
 import 'package:server_box/generated/l10n/l10n.dart';
 import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/sync/sync_ui.dart';
 import 'package:server_box/view/page/private_key/list.dart';
 import 'package:server_box/view/page/server/connection_stats.dart';
 import 'package:server_box/view/page/server/discovery/discovery.dart';
@@ -229,12 +230,14 @@ enum SettingsTabs {
   app,
   privateKey,
   backup,
+  cloudSync,
   about;
 
   String get i18n => switch (this) {
     SettingsTabs.app => libL10n.app,
     SettingsTabs.privateKey => l10n.privateKey,
     SettingsTabs.backup => libL10n.backup,
+    SettingsTabs.cloudSync => '云同步',
     SettingsTabs.about => libL10n.about,
   };
 
@@ -242,6 +245,7 @@ enum SettingsTabs {
     SettingsTabs.app => const AppSettingsPage(),
     SettingsTabs.privateKey => const PrivateKeysListPage(),
     SettingsTabs.backup => const BackupPage(),
+    SettingsTabs.cloudSync => const ServerSyncPage(showAppBar: false, showComparison: true),
     SettingsTabs.about => const _AppAboutPage(),
   };
 

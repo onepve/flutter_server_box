@@ -16,7 +16,6 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
-import 'package:server_box/sync/sync_ui.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 class BackupPage extends ConsumerStatefulWidget {
@@ -62,8 +61,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
       children: [
         [
           CenterGreyTitle(libL10n.sync),
-          _buildServerSync,
-          _buildTip,
           _buildBakPwd,
           if (isICloudSupported) _buildIcloud,
           _buildWebdav,
@@ -156,31 +153,6 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     }
     controller.dispose();
     node.dispose();
-  }
-
-  Widget get _buildServerSync {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.cloud_sync),
-        title: const Text('服务器同步'),
-        subtitle: Text(
-          '多设备数据同步 · 独立账号',
-          style: UIs.textGrey,
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => ServerSyncPage.route.go(context),
-      ),
-    );
-  }
-
-  Widget get _buildTip {
-    return CardX(
-      child: ListTile(
-        leading: const Icon(Icons.warning),
-        title: Text(libL10n.attention),
-        subtitle: Text(l10n.backupTip, style: UIs.textGrey),
-      ),
-    );
   }
 
   Widget get _buildFile {
