@@ -258,6 +258,22 @@ class SyncClient {
     final resp = await _dio.get(SyncConfig.totpStatus);
     return (resp.data as Map<String, dynamic>)['enabled'] as bool;
   }
+
+  /// 重新发送邮箱验证码
+  Future<String> resendVerification() async {
+    final resp = await _dio.post(SyncConfig.resendVerification);
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 验证邮箱
+  Future<String> verifyEmail({required String code}) async {
+    final profile = await getProfile();
+    final resp = await _dio.post(SyncConfig.verifyEmail, data: {
+      'user_uuid': profile.uuid,
+      'code': code,
+    });
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
 }
 
 /// 服务器要求 TOTP 验证

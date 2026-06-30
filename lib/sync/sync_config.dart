@@ -31,6 +31,8 @@ abstract final class SyncConfig {
   static const exportToEmail = '$_base/sync/export-to-email';
   static const deleteAccount = '$_base/auth/delete-account';
   static const totpStatus = '$_base/auth/totp/status';
+  static const resendVerification = '$_base/auth/resend-verification';
+  static const verifyEmail = '$_base/auth/verify-email';
 
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');

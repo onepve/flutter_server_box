@@ -151,6 +151,25 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         _pRow('邮箱', s.email ?? '—'),
         _pRow('邮箱验证', s.emailVerified ? '已验证 ✓' : '未验证',
             vc: s.emailVerified ? Colors.green : Colors.orange),
+        if (!s.emailVerified && s.email != null && s.email!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: SizedBox(
+              width: double.infinity,
+              child: TextButton.icon(
+                icon: const Icon(Icons.mail_outline, size: 15),
+                label: const Text('去验证邮箱', style: TextStyle(fontSize: 12)),
+                onPressed: () {
+                  context.pop(); // 关闭资料弹窗
+                  _showVerifyEmailDialog(s);
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.orange.shade700,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+              ),
+            ),
+          ),
         _pRow('TOTP 双因素', s.totpEnabled ? '已开启 ✓' : '未开启',
             vc: s.totpEnabled ? Colors.green : Colors.orange.shade400),
         const SizedBox(height: 10),
@@ -213,6 +232,52 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       Expanded(child: Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: vc))),
     ]),
   );
+
+  // ════════════════════════════════════════════
+  //  邮箱验证
+  // ════════════════════════════════════════════
+
+  Future<void> _showVerifyEmailDialog(SyncState s) async {
+    final ctrl = TextEditingController();
+    // 发送验证码
+    try {
+      final sendMsg = await context.showLoadingDialog(
+        fn: () => SyncClient.shared.resendVerification(),
+      );
+      context.showSnackBar(sendMsg.$1 ?? '验证码已发送');
+    } catch (e) {
+      context.showSnackBar('发送失败: $e');
+      return;
+    }
+
+    final r = await context.showRoundDialog<bool>(
+      title: '验证邮箱',
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text('验证码已发送到 ${s.email ?? '您的邮箱'}', style: UIs.textGrey, textAlign: TextAlign.center),
+        const SizedBox(height: 4),
+        Text('请在 10 分钟内输入', style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+        const SizedBox(height: 10),
+        Input(label: '6 位验证码', controller: ctrl, maxLength: 6, onSubmitted: (_) => context.pop(true)),
+      ]),
+      actions: Btnx.oks,
+    );
+    if (r != true) { ctrl.dispose(); return; }
+    final code = ctrl.text.trim();
+    ctrl.dispose();
+    if (code.isEmpty) { context.showSnackBar('请输入验证码'); return; }
+
+    try {
+      await context.showLoadingDialog(
+        fn: () => SyncClient.shared.verifyEmail(code: code),
+      );
+      context.showSnackBar('邮箱验证成功 ✓');
+      // 刷新资料以更新状态
+      ref.read(syncNotifierProvider.notifier).refreshProfile();
+      setState(() {});
+    } catch (e) {
+      context.showSnackBar('验证失败: $e');
+    }
+  }
 
   // ════════════════════════════════════════════
   //  登录/退出/危险按钮
