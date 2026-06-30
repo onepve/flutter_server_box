@@ -1,7 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_engine.dart';
@@ -713,7 +713,14 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     } catch (e) { context.showSnackBar('网络错误: $e'); }
   }
 
-  void _dispose(List<TextEditingController> cs, List<FocusNode> ns) { for (var c in cs) c.dispose(); for (var n in ns) n.dispose(); }
+  void _dispose(List<TextEditingController> cs, List<FocusNode> ns) {
+    for (var c in cs) {
+      c.dispose();
+    }
+    for (var n in ns) {
+      n.dispose();
+    }
+  }
 
   Future<void> _showForgotPasswordDialog() async {
     final ctrl = TextEditingController(), node = FocusNode();
@@ -758,9 +765,53 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     } catch (e) { context.showSnackBar('重置失败: $e'); }
   }
 
-  Future<void> _doSync() async { final p = await _requirePwd(); if (p==null) return; final notifier = ref.read(syncNotifierProvider.notifier); final r = await context.showLoadingDialog(fn: ()=>SyncEngine.syncAll(p)); if (r.$1!=null) { context.showSnackBar(r.$1!); notifier.checkForUpdates(); setState((){}); } else if (r.$2!=null) { notifier.logout(); context.showSnackBar('同步失败: ${r.$2}'); } }
-  Future<void> _doUpload() async { final p = await _requirePwd(); if (p==null) return; final notifier = ref.read(syncNotifierProvider.notifier); final e = await context.showLoadingDialog(fn: ()=>notifier.upload(password:p)); if (e.$1==null) context.showSnackBar('上传成功'); else context.showSnackBar('上传失败: ${e.$1}'); setState((){}); }
-  Future<void> _doDownload() async { final p = await _requirePwd(); if (p==null) return; final c = await context.showRoundDialog<bool>(title:'确认下载恢复', child: const Text('将从服务端下载数据并覆盖本地内容'), actions:Btnx.cancelOk); if (c!=true) return; final e = await context.showLoadingDialog(fn: ()=>ref.read(syncNotifierProvider.notifier).download(password:p)); if (e.$1==null) context.showSnackBar('下载恢复成功'); else context.showSnackBar('下载失败: ${e.$1}'); setState((){}); }
+  Future<void> _doSync() async {
+    final p = await _requirePwd();
+    if (p == null) return;
+    final notifier = ref.read(syncNotifierProvider.notifier);
+    final r = await context.showLoadingDialog(fn: () => SyncEngine.syncAll(p));
+    if (r.$1 != null) {
+      context.showSnackBar(r.$1!);
+      notifier.checkForUpdates();
+      setState(() {});
+    } else if (r.$2 != null) {
+      notifier.logout();
+      context.showSnackBar('同步失败: ${r.$2}');
+    }
+  }
+
+  Future<void> _doUpload() async {
+    final p = await _requirePwd();
+    if (p == null) return;
+    final notifier = ref.read(syncNotifierProvider.notifier);
+    final e = await context.showLoadingDialog(fn: () => notifier.upload(password: p));
+    if (e.$1 == null) {
+      context.showSnackBar('上传成功');
+    } else {
+      context.showSnackBar('上传失败: ${e.$1}');
+    }
+    setState(() {});
+  }
+
+  Future<void> _doDownload() async {
+    final p = await _requirePwd();
+    if (p == null) return;
+    final c = await context.showRoundDialog<bool>(
+      title: '确认下载恢复',
+      child: const Text('将从服务端下载数据并覆盖本地内容'),
+      actions: Btnx.cancelOk,
+    );
+    if (c != true) return;
+    final e = await context.showLoadingDialog(
+      fn: () => ref.read(syncNotifierProvider.notifier).download(password: p),
+    );
+    if (e.$1 == null) {
+      context.showSnackBar('下载恢复成功');
+    } else {
+      context.showSnackBar('下载失败: ${e.$1}');
+    }
+    setState(() {});
+  }
 
   Future<String?> _requirePwd() async {
     final saved = await SecureStoreProps.bakPwd.read(); if (saved!=null && saved.isNotEmpty) return saved;
