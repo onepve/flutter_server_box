@@ -1,0 +1,65 @@
+part of 'tab.dart';
+
+extension on _ServerPageState {
+  Widget _buildLandscape() {
+    return ValueListenableBuilder<double>(
+      valueListenable: _offsetNotifier,
+      builder: (context, offsetValue, child) {
+        final offset = Offset(offsetValue, offsetValue);
+        return Padding(
+          // Avoid display cutout
+          padding: EdgeInsets.all(offsetValue.abs()),
+          child: Transform.translate(
+            offset: offset,
+            child: child,
+          ),
+        );
+      },
+      child: Stack(
+        children: [
+          _buildLandscapeBody(),
+          Positioned(
+            top: 0,
+            left: 0,
+            child: IconButton(
+              onPressed: () => SettingsPage.route.go(context),
+              icon: const Icon(Icons.settings, color: Colors.grey),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandscapeBody() {
+    final serverState = ref.watch(serversProvider);
+    final order = serverState.serverOrder;
+
+    if (order.isEmpty) {
+      return Center(child: Text(libL10n.empty, textAlign: TextAlign.center));
+    }
+
+    return PageView.builder(
+      itemCount: order.length,
+      itemBuilder: (_, idx) {
+        final id = order[idx];
+        final srv = ref.watch(serverProvider(id));
+
+        final title = _buildServerCardTitle(srv);
+        final List<Widget> children = [
+          title,
+          _buildNormalCard(srv.status, srv.spi),
+        ];
+
+        return _getCardNoti(id).listenVal((_) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: children,
+          );
+        });
+      },
+    );
+  }
+}
