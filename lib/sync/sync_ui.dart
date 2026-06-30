@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_engine.dart';
@@ -79,12 +80,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
                   ? Icon(Icons.person, size: 26, color: Colors.grey.shade500)
                   : null,
             ),
-            UIs.height10,
+            const SizedBox(height: 10),
             // 昵称
             Text(_displayName(s),
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             if (s.loggedIn) ...[
-              UIs.height4,
+              const SizedBox(height: 4),
               Text('点击查看完整资料',
                   style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
             ],
@@ -120,7 +121,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             vc: s.emailVerified ? Colors.green : Colors.orange),
         _pRow('TOTP 双因素', s.totpEnabled ? '已开启 ✓' : '未开启',
             vc: s.totpEnabled ? Colors.green : Colors.orange.shade400),
-        UIs.height10,
+        const SizedBox(height: 10),
         if (!s.totpEnabled)
           _totpPrompt(),
         if (s.totpEnabled)
@@ -293,7 +294,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     String? exportMsg;
     if (wantExport == true) {
       try {
-        exportMsg = await context.showLoadingDialog(fn: () => SyncClient.shared.exportToEmail());
+        final exportRes = await context.showLoadingDialog(fn: () => SyncClient.shared.exportToEmail());
+        exportMsg = exportRes.$1;
       } catch (e) {
         context.showSnackBar('导出失败: $e');
         // 询问是否继续删除
@@ -333,7 +335,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       title: 'TOTP 验证',
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('请输入 6 位 TOTP 验证码', style: UIs.textGrey),
-        UIs.height10,
+        const SizedBox(height: 10),
         Input(label: '验证码', controller: ctrl, onSubmitted: (_) => context.pop(true)),
       ]),
       actions: Btnx.oks,
@@ -354,10 +356,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   Future<bool> _verifyEmailCode({String purpose = 'sync_data'}) async {
     // 发送验证码
     try {
-      final msg = await context.showLoadingDialog(
+      final sendRes = await context.showLoadingDialog(
         fn: () => SyncClient.shared.sendDeleteCode(purpose: purpose),
       );
-      context.showSnackBar(msg);
+      context.showSnackBar(sendRes.$1 ?? '验证码已发送');
     } catch (e) {
       context.showSnackBar('发送失败: $e');
       return false;
@@ -368,7 +370,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       title: '邮箱验证',
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('验证码已发送到您的邮箱，请查收', style: UIs.textGrey),
-        UIs.height10,
+        const SizedBox(height: 10),
         Input(label: '6 位验证码', controller: ctrl, onSubmitted: (_) => context.pop(true)),
       ]),
       actions: Btnx.oks,
@@ -393,7 +395,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       title: '密码验证',
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Text('请输入登录密码以确认删除', style: UIs.textGrey),
-        UIs.height10,
+        const SizedBox(height: 10),
         Input(label: '登录密码', controller: ctrl, obscureText: true, onSubmitted: (_) => context.pop(true)),
       ]),
       actions: Btnx.oks,
@@ -466,9 +468,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     String? exportMsg;
     if (wantExport == true) {
       try {
-        exportMsg = await context.showLoadingDialog(
+        final exportRes2 = await context.showLoadingDialog(
           fn: () => SyncClient.shared.exportToEmail(),
         );
+        exportMsg = exportRes2.$1;
       } catch (e) {
         context.showSnackBar('导出失败: $e');
         final cont = await context.showRoundDialog<bool>(
@@ -487,7 +490,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('请再次输入登录密码以确认注销',
             style: TextStyle(color: Colors.red)),
-        UIs.height10,
+        const SizedBox(height: 10),
         Input(label: '登录密码', controller: pwdCtrl,
             obscureText: true, onSubmitted: (_) => context.pop(true)),
       ]),
@@ -499,13 +502,14 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (finalPwd.isEmpty) { context.showSnackBar('请输入密码'); return; }
 
     try {
-      final msg = await context.showLoadingDialog(
+      final deleteRes = await context.showLoadingDialog(
         fn: () => SyncClient.shared.deleteAccount(
           password: finalPwd,
           exportToEmail: wantExport == true,
         ),
       );
-      final fullMsg = exportMsg != null ? '$msg，备份已发送到邮箱' : msg;
+      final deleteMsg = deleteRes.$1 ?? '账号已注销';
+      final fullMsg = exportMsg != null ? '$deleteMsg，备份已发送到邮箱' : deleteMsg;
       context.showSnackBar(fullMsg);
       // 清除本地同步状态并退出登录
       await ref.read(syncNotifierProvider.notifier).logout();
@@ -699,7 +703,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       if (resp.$1 != null) {
         if (resp.$1!.recoveryKey != null) {
           await context.showRoundDialog(title: '注册成功', child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('账号注册成功！'), UIs.height10, const Text('请保存 Recovery Key：'),
+            const Text('账号注册成功！'), const SizedBox(height: 10), const Text('请保存 Recovery Key：'),
             Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
               child: SelectableText(resp.$1!.recoveryKey!, style: const TextStyle(fontFamily: 'monospace', fontSize: 14))),
             const Text('此密钥仅显示一次！', style: TextStyle(color: Colors.red, fontSize: 12)),
@@ -724,7 +728,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       final resp = await context.showLoadingDialog(fn: () => SyncClient.shared.forgotPassword(usernameOrEmail: id));
       if (resp.$1 != null && resp.$1!.token != null) {
         final ok = await context.showRoundDialog<bool>(title: '重置令牌', child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text(resp.$1!.message, style: UIs.textGrey), UIs.height10,
+          Text(resp.$1!.message, style: UIs.textGrey), const SizedBox(height: 10),
           Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
             child: SelectableText(resp.$1!.token!, style: const TextStyle(fontFamily: 'monospace', fontSize: 16))),
         ]), actions: [TextButton(onPressed: ()=>context.pop(false), child: const Text('稍后')), ElevatedButton(onPressed: ()=>context.pop(true), child: const Text('重置密码'))]);
