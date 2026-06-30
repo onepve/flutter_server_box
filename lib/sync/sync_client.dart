@@ -220,6 +220,32 @@ class SyncClient {
   Future<void> deleteData({required String dataType}) async {
     await _dio.delete('${SyncConfig.syncDelete}/$dataType');
   }
+
+  /// 发送删除验证码到邮箱
+  Future<String> sendDeleteCode() async {
+    final resp = await _dio.post(SyncConfig.sendDeleteCode);
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 验证删除操作（TOTP 码或邮件验证码）
+  Future<String> verifyDeleteCode({required String code}) async {
+    final resp = await _dio.post(SyncConfig.verifyDeleteCode, data: {
+      'code': code,
+    });
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 导出加密同步数据到邮箱
+  Future<String> exportToEmail() async {
+    final resp = await _dio.post(SyncConfig.exportToEmail);
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 获取 TOTP 启用状态
+  Future<bool> getTotpStatus() async {
+    final resp = await _dio.get(SyncConfig.totpStatus);
+    return (resp.data as Map<String, dynamic>)['enabled'] as bool;
+  }
 }
 
 /// 服务器要求 TOTP 验证

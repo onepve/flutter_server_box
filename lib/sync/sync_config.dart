@@ -26,6 +26,10 @@ abstract final class SyncConfig {
   static const syncDiff = '$_base/sync/diff';
   static const syncStatus = '$_base/sync/status';
   static const syncDelete = '$_base/sync';
+  static const sendDeleteCode = '$_base/auth/send-delete-code';
+  static const verifyDeleteCode = '$_base/auth/verify-delete-code';
+  static const exportToEmail = '$_base/sync/export-to-email';
+  static const totpStatus = '$_base/auth/totp/status';
 
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');
