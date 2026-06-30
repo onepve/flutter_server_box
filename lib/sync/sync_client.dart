@@ -222,8 +222,8 @@ class SyncClient {
   }
 
   /// 发送删除验证码到邮箱
-  Future<String> sendDeleteCode() async {
-    final resp = await _dio.post(SyncConfig.sendDeleteCode);
+  Future<String> sendDeleteCode({String purpose = 'sync_data'}) async {
+    final resp = await _dio.post('${SyncConfig.sendDeleteCode}?purpose=$purpose');
     return (resp.data as Map<String, dynamic>)['message'] as String;
   }
 
@@ -238,6 +238,18 @@ class SyncClient {
   /// 导出加密同步数据到邮箱
   Future<String> exportToEmail() async {
     final resp = await _dio.post(SyncConfig.exportToEmail);
+    return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 注销账号（需先通过身份验证流程）
+  Future<String> deleteAccount({
+    required String password,
+    bool exportToEmail = false,
+  }) async {
+    final resp = await _dio.post(SyncConfig.deleteAccount, data: {
+      'password': password,
+      'export_to_email': exportToEmail,
+    });
     return (resp.data as Map<String, dynamic>)['message'] as String;
   }
 

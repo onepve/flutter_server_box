@@ -206,6 +206,13 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       subtitle: Text('清空服务端加密数据（需身份验证）', style: UIs.textGrey),
       onTap: () => _startDeleteFlow(),
     )),
+    // ── 注销账号 ──
+    CardX(child: ListTile(
+      leading: const Icon(Icons.person_remove, color: Colors.red),
+      title: const Text('注销账号', style: TextStyle(color: Colors.red)),
+      subtitle: Text('永久删除账号及所有数据（不可恢复）', style: UIs.textGrey),
+      onTap: () => _startAccountDeleteFlow(),
+    )),
   ];
 
   Widget _buildSyncButtons(SyncState s) {
@@ -300,11 +307,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   /// 第 1 步：身份验证（TOTP 码或邮件验证码）
-  Future<bool> _verifyIdentity(SyncState s) async {
+  Future<bool> _verifyIdentity(SyncState s, {String purpose = 'sync_data'}) async {
     if (s.totpEnabled) {
       return _verifyTotp();
     } else {
-      return _verifyEmailCode();
+      return _verifyEmailCode(purpose: purpose);
     }
   }
 
@@ -332,10 +339,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
   }
 
-  Future<bool> _verifyEmailCode() async {
+  Future<bool> _verifyEmailCode({String purpose = 'sync_data'}) async {
     // 发送验证码
     try {
-      final msg = await context.showLoadingDialog(fn: () => SyncClient.shared.sendDeleteCode());
+      final msg = await context.showLoadingDialog(
+        fn: () => SyncClient.shared.sendDeleteCode(purpose: purpose),
+      );
       context.showSnackBar(msg);
     } catch (e) {
       context.showSnackBar('发送失败: $e');
@@ -395,6 +404,102 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     } catch (e) {
       context.showSnackBar('密码错误');
       return false;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  多步账号注销流程
+  // ═══════════════════════════════════════════════════
+
+  Future<void> _startAccountDeleteFlow() async {
+    final s = ref.read(syncNotifierProvider);
+    // ── ⚠ 初始警告 ──
+    final warn = await context.showRoundDialog<bool>(
+      title: '⚠ 注销账号',
+      child: const Text('将永久注销账号并删除所有数据。\n\n'
+          '包括：同步数据、审计日志、个人资料等。\n'
+          '此操作无法恢复。'),
+      actions: Btnx.cancelOk,
+    );
+    if (warn != true) return;
+
+    // ── 第 1 步：身份验证 ──
+    final verified = await _verifyIdentity(s, purpose: 'account');
+    if (!verified) return;
+
+    // ── 第 2 步：输入密码 ──
+    final pwdOk = await _verifyPassword();
+    if (!pwdOk) return;
+
+    // ── 第 3 步：二次确认 ──
+    final confirmed = await context.showRoundDialog<bool>(
+      title: '确认注销',
+      child: const Text('确定要注销账号吗？\n此操作不可撤销。'),
+      actions: Btnx.cancelOk,
+    );
+    if (confirmed != true) return;
+
+    // ── 第 4 步：导出备份？ ──
+    final wantExport = await context.showRoundDialog<bool>(
+      title: '导出备份',
+      child: const Text('是否将加密同步数据导出到邮箱？\n\n'
+          '万一后悔时可以用密码解密恢复数据。'),
+      actions: [
+        TextButton(onPressed: () => context.pop(false), child: const Text('不导出')),
+        ElevatedButton(onPressed: () => context.pop(true), child: const Text('导出到邮箱')),
+      ],
+    );
+
+    // ── 第 5 步：执行注销 ──
+    String? exportMsg;
+    if (wantExport == true) {
+      try {
+        exportMsg = await context.showLoadingDialog(
+          fn: () => SyncClient.shared.exportToEmail(),
+        );
+      } catch (e) {
+        context.showSnackBar('导出失败: $e');
+        final cont = await context.showRoundDialog<bool>(
+          title: '导出失败',
+          child: Text('导出失败，是否仍然注销账号？\n错误: $e'),
+          actions: Btnx.cancelOk,
+        );
+        if (cont != true) return;
+      }
+    }
+
+    // 获取当前密码（_verifyPassword 里的密码需要再次获取）
+    final pwdCtrl = TextEditingController();
+    final pwdResult = await context.showRoundDialog<bool>(
+      title: '最终确认',
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Text('请再次输入登录密码以确认注销',
+            style: TextStyle(color: Colors.red)),
+        UIs.height10,
+        Input(label: '登录密码', controller: pwdCtrl,
+            obscureText: true, onSubmitted: (_) => context.pop(true)),
+      ]),
+      actions: Btnx.cancelOk,
+    );
+    if (pwdResult != true) { pwdCtrl.dispose(); return; }
+    final finalPwd = pwdCtrl.text.trim();
+    pwdCtrl.dispose();
+    if (finalPwd.isEmpty) { context.showSnackBar('请输入密码'); return; }
+
+    try {
+      final msg = await context.showLoadingDialog(
+        fn: () => SyncClient.shared.deleteAccount(
+          password: finalPwd,
+          exportToEmail: wantExport == true,
+        ),
+      );
+      final fullMsg = exportMsg != null ? '$msg，备份已发送到邮箱' : msg;
+      context.showSnackBar(fullMsg);
+      // 清除本地同步状态并退出登录
+      await ref.read(syncNotifierProvider.notifier).logout();
+      setState(() {});
+    } catch (e) {
+      context.showSnackBar('注销失败: $e');
     }
   }
 

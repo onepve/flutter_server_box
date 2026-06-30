@@ -29,6 +29,7 @@ abstract final class SyncConfig {
   static const sendDeleteCode = '$_base/auth/send-delete-code';
   static const verifyDeleteCode = '$_base/auth/verify-delete-code';
   static const exportToEmail = '$_base/sync/export-to-email';
+  static const deleteAccount = '$_base/auth/delete-account';
   static const totpStatus = '$_base/auth/totp/status';
 
   /// 同步相关安全存储
