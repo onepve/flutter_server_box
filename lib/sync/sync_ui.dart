@@ -315,9 +315,9 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           const Expanded(flex: 5, child: Text('本地文件恢复', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
         ]),
         _compRow(children: [
-          const Expanded(flex: 3, child: Text('服务端知密', style: TextStyle(fontSize: 12))),
-          const Expanded(flex: 4, child: Text('❌ 零信任', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-          const Expanded(flex: 5, child: Text('❌ 仅文件加密', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 3, child: Text('端到端加密', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('✅ 密码不上传', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 5, child: Text('❌ 密码会传输', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.red))),
         ]),
       ]),
     ),
