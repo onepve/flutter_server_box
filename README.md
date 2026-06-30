@@ -58,12 +58,15 @@
 
 ## 📥 安装
 
-| 平台 | 下载 |
-|------|------|
-| iOS | [AppStore](https://apps.apple.com/app/id1586449703) |
-| macOS | [AppStore](https://apps.apple.com/app/id1586449703) / brew install --cask server-box |
-| Android | [GitHub Releases](https://github.com/onepve/flutter_server_box/releases) |
-| Linux / Windows | [GitHub Releases](https://github.com/onepve/flutter_server_box/releases) |
+| 平台 | 下载 | 编译 |
+|------|------|------|
+| Android | [GitHub Releases](https://github.com/onepve/flutter_server_box/releases) | ✅ 自动编译 |
+| Windows | [GitHub Releases](https://github.com/onepve/flutter_server_box/releases) | ✅ 自动编译 |
+| Linux | [GitHub Releases](https://github.com/onepve/flutter_server_box/releases) | ✅ 自动编译 |
+| iOS | 暂不提供 | ❌ 未编译 |
+| macOS | 暂不提供 | ❌ 未编译 |
+
+> ⚠️ 当前 CI 仅自动编译 **Android / Windows / Linux** 三个平台。iOS 和 macOS 需要 Apple 开发者证书，如需使用请自行从源码构建。
 
 请从 **信任** 的来源下载！
 
