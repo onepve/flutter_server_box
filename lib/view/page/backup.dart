@@ -16,6 +16,7 @@ import 'package:server_box/data/model/server/snippet.dart';
 import 'package:server_box/data/provider/snippet.dart';
 import 'package:server_box/data/res/misc.dart';
 import 'package:server_box/data/res/store.dart';
+import 'package:server_box/sync/sync_ui.dart';
 import 'package:webdav_client_plus/webdav_client_plus.dart';
 
 class BackupPage extends ConsumerStatefulWidget {
@@ -62,6 +63,7 @@ final class _BackupPageState extends ConsumerState<BackupPage>
         [
           CenterGreyTitle(libL10n.sync),
           _buildBakPwd,
+          _buildSelfHostedSync,
           if (isICloudSupported) _buildIcloud,
           _buildWebdav,
           _buildGist,
@@ -153,6 +155,24 @@ final class _BackupPageState extends ConsumerState<BackupPage>
     }
     controller.dispose();
     node.dispose();
+  }
+
+  Widget get _buildSelfHostedSync {
+    return CardX(
+      child: ListTile(
+        leading: const Icon(Icons.cloud),
+        title: const Text('自建云同步'),
+        subtitle: const Text('https://sync.onepve.com', style: UIs.textGrey),
+        trailing: const Icon(Icons.keyboard_arrow_right),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const ServerSyncPage(showAppBar: true, showComparison: true),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget get _buildFile {

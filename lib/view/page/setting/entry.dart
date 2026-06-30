@@ -230,14 +230,12 @@ enum SettingsTabs {
   app,
   privateKey,
   backup,
-  cloudSync,
   about;
 
   String get i18n => switch (this) {
     SettingsTabs.app => libL10n.app,
     SettingsTabs.privateKey => l10n.privateKey,
     SettingsTabs.backup => libL10n.backup,
-    SettingsTabs.cloudSync => '云同步',
     SettingsTabs.about => libL10n.about,
   };
 
@@ -245,7 +243,6 @@ enum SettingsTabs {
     SettingsTabs.app => const AppSettingsPage(),
     SettingsTabs.privateKey => const PrivateKeysListPage(),
     SettingsTabs.backup => const BackupPage(),
-    SettingsTabs.cloudSync => const ServerSyncPage(showAppBar: false, showComparison: true),
     SettingsTabs.about => const _AppAboutPage(),
   };
 
