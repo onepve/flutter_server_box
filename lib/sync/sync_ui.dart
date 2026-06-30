@@ -21,51 +21,66 @@ class ServerSyncPage extends ConsumerStatefulWidget {
 final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   @override
   Widget build(BuildContext context) {
-    final syncState = ref.watch(syncNotifierProvider);
-    Widget body;
+    SyncState? syncState;
     try {
-      body = SafeArea(
-        child: SingleChildScrollView(
-          child: MultiList(widthDivider: 2, children: [
-            [CenterGreyTitle('同步账号'), _buildLoginStatus(syncState),
-             if (!syncState.loggedIn) _buildLoginButton(syncState),
-             if (syncState.loggedIn) ..._buildLoggedInItems(syncState)],
-            [CenterGreyTitle('同步操作'),
-             if (syncState.loggedIn) _buildSyncButtons(syncState)],
-            if (widget.showComparison) ...[
-              [CenterGreyTitle('与内置备份方式对比'), _buildComparison()],
-              [CenterGreyTitle('使用建议'), _buildUsageTips()],
-            ] else
-              [CenterGreyTitle('关于'), _buildAboutItem],
-          ]),
-        ),
-      );
-    } catch (e) {
-      body = Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.error_outline, size: 40, color: Colors.orange),
-            const SizedBox(height: 10),
-            const Text('页面加载异常', style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 6),
-            Text('$e', style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
-          ]),
-        ),
-      );
+      syncState = ref.watch(syncNotifierProvider);
+    } catch (_) {
+      // provider 没准备好时显示加载
     }
 
-    if (!widget.showAppBar) return body;
+    final body = _buildBody(syncState ?? const SyncState());
 
+    if (!widget.showAppBar) return body;
     return Scaffold(
       appBar: CustomAppBar(title: const Text('云同步')),
       body: body,
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  //  登录状态 — 只有头像 + 昵称，点击展开完整资料
-  // ═══════════════════════════════════════════════════
+  Widget _buildBody(SyncState s) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _section('同步账号'),
+            _buildLoginStatus(s),
+            if (!s.loggedIn) _buildLoginButton(s),
+            if (s.loggedIn) ..._loggedInItems(s),
+
+            if (s.loggedIn) ...[
+              _section('同步操作'),
+              _syncButtons(s),
+            ],
+
+            if (widget.showComparison) ...[
+              _section('与内置备份方式对比'),
+              _comparisonCard(),
+              _section('使用建议'),
+              _usageCard(),
+            ] else ...[
+              _section('关于'),
+              _aboutCard(),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _section(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 6),
+      child: Text(title, style: TextStyle(
+        fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade600,
+      )),
+    );
+  }
+
+  // ════════════════════════════════════════════
+  //  登录状态卡片
+  // ════════════════════════════════════════════
 
   String _displayName(SyncState s) {
     if (s.nickname != null && s.nickname!.isNotEmpty) return s.nickname!;
@@ -87,7 +102,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            // 头像
             CircleAvatar(
               radius: 30,
               backgroundColor: Colors.grey.shade200,
@@ -97,9 +111,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
                   : null,
             ),
             const SizedBox(height: 10),
-            // 昵称
-            Text(_displayName(s),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(_displayName(s), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             if (s.loggedIn) ...[
               const SizedBox(height: 4),
               Text('点击查看完整资料',
@@ -111,9 +123,9 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════
-  //  完整资料弹窗
-  // ═══════════════════════════════════════════════════
+  // ════════════════════════════════════════════
+  //  资料弹窗
+  // ════════════════════════════════════════════
 
   Future<void> _showProfileDialog(SyncState s) async {
     ref.read(syncNotifierProvider.notifier).refreshProfile();
@@ -138,63 +150,57 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         _pRow('TOTP 双因素', s.totpEnabled ? '已开启 ✓' : '未开启',
             vc: s.totpEnabled ? Colors.green : Colors.orange.shade400),
         const SizedBox(height: 10),
-        if (!s.totpEnabled)
-          _totpPrompt(),
-        if (s.totpEnabled)
-          _totpEnabled(),
+        if (!s.totpEnabled) _totpPrompt(),
+        if (s.totpEnabled) _totpEnabled(),
       ]),
       actions: [TextButton(onPressed: () => context.pop(), child: const Text('关闭'))],
     );
   }
 
-  Widget _totpPrompt() {
-    return Container(
-      width: double.infinity, padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.orange.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.orange.shade200)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
-          const SizedBox(width: 6),
-          Text('建议开启 TOTP 保护账号', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.orange.shade800)),
-        ]),
-        const SizedBox(height: 6),
-        Text('手机端扫码不便，建议在电脑浏览器中绑定。', style: TextStyle(fontSize: 11, color: Colors.orange.shade700)),
-        const SizedBox(height: 8),
-        SizedBox(width: double.infinity,
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.open_in_browser, size: 15),
-            label: const Text('在网页端开启 TOTP'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
-            onPressed: () async {
-              final url = Uri.parse(SyncConfig.webProfileUrl);
-              try {
-                await launchUrl(url, mode: LaunchMode.externalApplication);
-              } catch (_) {
-                await Clipboard.setData(ClipboardData(text: url.toString()));
-                context.showSnackBar('链接已复制到剪贴板');
-              }
-            },
-          ),
-        ),
-      ]),
-    );
-  }
-
-  Widget _totpEnabled() {
-    return Container(
-      width: double.infinity, padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.green.shade50,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.green.shade200)),
-      child: Row(children: [
-        Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+  Widget _totpPrompt() => Container(
+    width: double.infinity, padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.orange.shade200)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
         const SizedBox(width: 6),
-        Expanded(child: Text('TOTP 已开启，账号受保护。', style: TextStyle(fontSize: 12, color: Colors.green.shade700))),
+        Text('建议开启 TOTP 保护账号', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.orange.shade800)),
       ]),
-    );
-  }
+      const SizedBox(height: 6),
+      Text('手机端扫码不便，建议在电脑浏览器中绑定。', style: TextStyle(fontSize: 11, color: Colors.orange.shade700)),
+      const SizedBox(height: 8),
+      SizedBox(width: double.infinity,
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.open_in_browser, size: 15),
+          label: const Text('在网页端开启 TOTP'),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade600, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 8)),
+          onPressed: () async {
+            final url = Uri.parse(SyncConfig.webProfileUrl);
+            try {
+              await launchUrl(url, mode: LaunchMode.externalApplication);
+            } catch (_) {
+              await Clipboard.setData(ClipboardData(text: url.toString()));
+              context.showSnackBar('链接已复制到剪贴板');
+            }
+          },
+        ),
+      ),
+    ]),
+  );
+
+  Widget _totpEnabled() => Container(
+    width: double.infinity, padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: Colors.green.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green.shade200)),
+    child: Row(children: [
+      Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+      const SizedBox(width: 6),
+      Expanded(child: Text('TOTP 已开启，账号受保护。', style: TextStyle(fontSize: 12, color: Colors.green.shade700))),
+    ]),
+  );
 
   Widget _pRow(String label, String value, {Color? vc}) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 4),
@@ -204,9 +210,9 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     ]),
   );
 
-  // ═══════════════════════════════════════════════════
-  //  登录 / 退出 / 同步按钮（不变）
-  // ═══════════════════════════════════════════════════
+  // ════════════════════════════════════════════
+  //  登录/退出/危险按钮
+  // ════════════════════════════════════════════
 
   Widget _buildLoginButton(SyncState s) => CardX(child: ListTile(
     leading: const Icon(Icons.login), title: const Text('登录同步账户'),
@@ -217,7 +223,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     onTap: s.syncing ? null : () => _showLoginDialog(),
   ));
 
-  List<Widget> _buildLoggedInItems(SyncState s) => [
+  List<Widget> _loggedInItems(SyncState s) => [
     CardX(child: ListTile(
       leading: const Icon(Icons.logout), title: const Text('退出登录'),
       onTap: () async { await ref.read(syncNotifierProvider.notifier).logout(); setState(() {}); },
@@ -228,14 +234,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (s.error != null)
       CardX(child: ListTile(leading: const Icon(Icons.error_outline, color: Colors.red),
         title: Text(s.error!, style: const TextStyle(color: Colors.red)))),
-    // ── 删除同步数据 ──
     CardX(child: ListTile(
       leading: const Icon(Icons.delete_forever, color: Colors.red),
       title: const Text('删除同步数据', style: TextStyle(color: Colors.red)),
       subtitle: Text('清空服务端加密数据（需身份验证）', style: UIs.textGrey),
       onTap: () => _startDeleteFlow(),
     )),
-    // ── 注销账号 ──
     CardX(child: ListTile(
       leading: const Icon(Icons.person_remove, color: Colors.red),
       title: const Text('注销账号', style: TextStyle(color: Colors.red)),
@@ -244,7 +248,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     )),
   ];
 
-  Widget _buildSyncButtons(SyncState s) {
+  Widget _syncButtons(SyncState s) {
     final syncing = s.syncing;
     return Column(children: [
       CardX(child: ListTile(leading: const Icon(Icons.sync), title: const Text('一键同步'),
@@ -260,19 +264,113 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     ]);
   }
 
-  Widget get _buildAboutItem => CardX(child: ListTile(
+  Widget _aboutCard() => CardX(child: ListTile(
     leading: const Icon(Icons.info_outline), title: const Text('服务端同步'),
     subtitle: Text('数据端到端加密，服务端无法解密\n服务端地址: ${SyncConfig.serverUrl}',
         style: UIs.textGrey.copyWith(fontSize: 12)),
   ));
 
-  // ═══════════════════════════════════════════════════
-  //  多步删除流程
-  // ═══════════════════════════════════════════════════
+  // ════════════════════════════════════════════
+  //  对比表格
+  // ════════════════════════════════════════════
+
+  Widget _comparisonCard() => CardX(
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _compRow(isHeader: true, children: [
+          const Expanded(flex: 3, child: Text('', style: TextStyle(fontWeight: FontWeight.w600))),
+          const Expanded(flex: 4, child: Text('☁️ 云同步', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
+          const Expanded(flex: 5, child: Text('📦 内置备份', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
+        ]),
+        const Divider(height: 1),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('触发方式', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('一键同步', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.blue))),
+          const Expanded(flex: 5, child: Text('手动导出/导入', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('加密方式', style: TextStyle(fontSize: 12))),
+          Expanded(flex: 4, child: Text('登录密码\nAES-256-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+          Expanded(flex: 5, child: Text('备份密码\nAES-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('多设备', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('✅ 登录即连', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 5, child: Text('手动传输文件', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('存储位置', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('sync.onepve.com', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.blue))),
+          const Expanded(flex: 5, child: Text('WebDAV/Gist/本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 11))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('账号管理', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('✅ 注册/注销', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 5, child: Text('无', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('数据恢复', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('✅ 导出到邮箱', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 5, child: Text('本地文件恢复', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
+        ]),
+        _compRow(children: [
+          const Expanded(flex: 3, child: Text('服务端知密', style: TextStyle(fontSize: 12))),
+          const Expanded(flex: 4, child: Text('❌ 零信任', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+          const Expanded(flex: 5, child: Text('❌ 仅文件加密', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
+        ]),
+      ]),
+    ),
+  );
+
+  Widget _compRow({required List<Widget> children, bool isHeader = false}) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+    decoration: BoxDecoration(
+      border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 0.5)),
+      color: isHeader ? Colors.grey.shade100 : null,
+    ),
+    child: Row(children: children),
+  );
+
+  Widget _usageCard() => CardX(
+    child: Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber.shade700),
+          const SizedBox(width: 6),
+          Text('推荐用法', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.amber.shade800)),
+        ]),
+        const SizedBox(height: 8),
+        _tip('日常多设备同步 → 使用云同步'),
+        _tip('换手机时迁移数据 → 云同步一键下载恢复'),
+        _tip('担心数据丢失 → 定期用 WebDAV/Gist 手动备份'),
+        _tip('两台都可同时使用，互不影响'),
+        const SizedBox(height: 6),
+        Row(children: [
+          Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
+          const SizedBox(width: 4),
+          Expanded(child: Text('云同步和内置备份使用不同的加密密码，数据格式通用，可以互相转换。',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
+        ]),
+      ]),
+    ),
+  );
+
+  Widget _tip(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text('• ', style: TextStyle(fontSize: 12)),
+      Expanded(child: Text(text, style: const TextStyle(fontSize: 12))),
+    ]),
+  );
+
+  // ════════════════════════════════════════════
+  //  多步删除 / 注销流程
+  // ════════════════════════════════════════════
 
   Future<void> _startDeleteFlow() async {
     final s = ref.read(syncNotifierProvider);
-    // ── ⚠ 初始警告 ──
     final warn = await context.showRoundDialog<bool>(
       title: '⚠ 删除同步数据',
       child: const Text('将永久删除服务端存储的所有加密同步数据。\n\n删除前需要身份验证。'),
@@ -280,15 +378,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
     if (warn != true) return;
 
-    // ── 第 1 步：身份验证 ──
     final verified = await _verifyIdentity(s);
     if (!verified) return;
 
-    // ── 第 2 步：输入密码 ──
     final pwdOk = await _verifyPassword();
     if (!pwdOk) return;
 
-    // ── 第 3 步：二次确认 ──
     final confirmed = await context.showRoundDialog<bool>(
       title: '确认删除',
       child: const Text('确定要删除所有同步数据吗？\n此操作不可撤销。'),
@@ -296,7 +391,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
     if (confirmed != true) return;
 
-    // ── 第 4 步：导出备份？ ──
     final wantExport = await context.showRoundDialog<bool>(
       title: '导出备份',
       child: const Text('是否将加密数据导出并发送到您的邮箱？\n\n万一后悔时可以找回并解密恢复。'),
@@ -306,7 +400,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       ],
     );
 
-    // ── 第 5 步：执行删除 + 导出 ──
     String? exportMsg;
     if (wantExport == true) {
       try {
@@ -314,7 +407,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         exportMsg = exportRes.$1;
       } catch (e) {
         context.showSnackBar('导出失败: $e');
-        // 询问是否继续删除
         final cont = await context.showRoundDialog<bool>(
           title: '导出失败',
           child: Text('导出失败，是否仍然删除数据？\n错误: $e'),
@@ -336,7 +428,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
   }
 
-  /// 第 1 步：身份验证（TOTP 码或邮件验证码）
   Future<bool> _verifyIdentity(SyncState s, {String purpose = 'sync_data'}) async {
     if (s.totpEnabled) {
       return _verifyTotp();
@@ -370,7 +461,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   Future<bool> _verifyEmailCode({String purpose = 'sync_data'}) async {
-    // 发送验证码
     try {
       final sendRes = await context.showLoadingDialog(
         fn: () => SyncClient.shared.sendDeleteCode(purpose: purpose),
@@ -404,7 +494,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
   }
 
-  /// 第 2 步：输入密码验证
   Future<bool> _verifyPassword() async {
     final ctrl = TextEditingController();
     final result = await context.showRoundDialog<bool>(
@@ -421,7 +510,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     ctrl.dispose();
     if (pwd.isEmpty) { context.showSnackBar('请输入密码'); return false; }
 
-    // 用当前用户名 + 密码尝试登录验证
     final username = ref.read(syncNotifierProvider).username;
     if (username == null) { context.showSnackBar('内部错误'); return false; }
 
@@ -429,7 +517,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       await SyncClient.shared.login(username: username, password: pwd);
       return true;
     } on SyncTOTPRequiredException {
-      // TOTP 开了但这里不需要完整登录——密码正确就够了
       return true;
     } catch (e) {
       context.showSnackBar('密码错误');
@@ -437,13 +524,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  //  多步账号注销流程
-  // ═══════════════════════════════════════════════════
+  // ════════════════════════════════════════════
+  //  账号注销
+  // ════════════════════════════════════════════
 
   Future<void> _startAccountDeleteFlow() async {
     final s = ref.read(syncNotifierProvider);
-    // ── ⚠ 初始警告 ──
     final warn = await context.showRoundDialog<bool>(
       title: '⚠ 注销账号',
       child: const Text('将永久注销账号并删除所有数据。\n\n'
@@ -453,15 +539,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
     if (warn != true) return;
 
-    // ── 第 1 步：身份验证 ──
     final verified = await _verifyIdentity(s, purpose: 'account');
     if (!verified) return;
 
-    // ── 第 2 步：输入密码 ──
     final pwdOk = await _verifyPassword();
     if (!pwdOk) return;
 
-    // ── 第 3 步：二次确认 ──
     final confirmed = await context.showRoundDialog<bool>(
       title: '确认注销',
       child: const Text('确定要注销账号吗？\n此操作不可撤销。'),
@@ -469,7 +552,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
     if (confirmed != true) return;
 
-    // ── 第 4 步：导出备份？ ──
     final wantExport = await context.showRoundDialog<bool>(
       title: '导出备份',
       child: const Text('是否将加密同步数据导出到邮箱？\n\n'
@@ -480,7 +562,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       ],
     );
 
-    // ── 第 5 步：执行注销 ──
     String? exportMsg;
     if (wantExport == true) {
       try {
@@ -499,16 +580,13 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       }
     }
 
-    // 获取当前密码（_verifyPassword 里的密码需要再次获取）
     final pwdCtrl = TextEditingController();
     final pwdResult = await context.showRoundDialog<bool>(
       title: '最终确认',
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('请再次输入登录密码以确认注销',
-            style: TextStyle(color: Colors.red)),
+        const Text('请再次输入登录密码以确认注销', style: TextStyle(color: Colors.red)),
         const SizedBox(height: 10),
-        Input(label: '登录密码', controller: pwdCtrl,
-            obscureText: true, onSubmitted: (_) => context.pop(true)),
+        Input(label: '登录密码', controller: pwdCtrl, obscureText: true, onSubmitted: (_) => context.pop(true)),
       ]),
       actions: Btnx.cancelOk,
     );
@@ -519,15 +597,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
 
     try {
       final deleteRes = await context.showLoadingDialog(
-        fn: () => SyncClient.shared.deleteAccount(
-          password: finalPwd,
-          exportToEmail: wantExport == true,
-        ),
+        fn: () => SyncClient.shared.deleteAccount(password: finalPwd, exportToEmail: wantExport == true),
       );
       final deleteMsg = deleteRes.$1 ?? '账号已注销';
       final fullMsg = exportMsg != null ? '$deleteMsg，备份已发送到邮箱' : deleteMsg;
       context.showSnackBar(fullMsg);
-      // 清除本地同步状态并退出登录
       await ref.read(syncNotifierProvider.notifier).logout();
       setState(() {});
     } catch (e) {
@@ -535,124 +609,9 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  //  对比表格 & 使用建议
-  // ═══════════════════════════════════════════════════
-
-  Widget _buildComparison() {
-    return CardX(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 表头
-            _compRow(
-              isHeader: true,
-              children: const [
-                Expanded(flex: 3, child: Text('', style: TextStyle(fontWeight: FontWeight.w600))),
-                Expanded(flex: 4, child: Text('☁️ 云同步', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
-                Expanded(flex: 5, child: Text('📦 内置备份', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12), textAlign: TextAlign.center)),
-              ],
-            ),
-            const Divider(height: 1),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('触发方式', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('一键同步', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.blue))),
-              const Expanded(flex: 5, child: Text('手动导出/导入', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('加密方式', style: TextStyle(fontSize: 12))),
-              Expanded(flex: 4, child: Text('登录密码\nAES-256-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
-              Expanded(flex: 5, child: Text('备份密码\nAES-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('多设备', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('✅ 登录即连', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-              const Expanded(flex: 5, child: Text('手动传输文件', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('存储位置', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('sync.onepve.com', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.blue))),
-              const Expanded(flex: 5, child: Text('WebDAV/Gist/本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 11))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('账号管理', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('✅ 注册/注销', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-              const Expanded(flex: 5, child: Text('无', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('数据恢复', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('✅ 导出到邮箱', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-              const Expanded(flex: 5, child: Text('本地文件恢复', textAlign: TextAlign.center, style: TextStyle(fontSize: 12))),
-            ]),
-            _compRow(children: [
-              const Expanded(flex: 3, child: Text('服务端知密', style: TextStyle(fontSize: 12))),
-              const Expanded(flex: 4, child: Text('❌ 零信任', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-              const Expanded(flex: 5, child: Text('❌ 仅文件加密', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-            ]),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _compRow({required List<Widget> children, bool isHeader = false}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 0.5)),
-        color: isHeader ? Colors.grey.shade100 : null,
-      ),
-      child: Row(children: children),
-    );
-  }
-
-  Widget _buildUsageTips() {
-    return Column(children: [
-      CardX(
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Icon(Icons.lightbulb_outline, size: 16, color: Colors.amber.shade700),
-                const SizedBox(width: 6),
-                Text('推荐用法', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.amber.shade800)),
-              ]),
-              const SizedBox(height: 8),
-              _tip('日常多设备同步 → 使用云同步'),
-              _tip('换手机时迁移数据 → 云同步一键下载恢复'),
-              _tip('担心数据丢失 → 定期用 WebDAV/Gist 手动备份'),
-              _tip('两台都可同时使用，互不影响'),
-              const SizedBox(height: 6),
-              Row(children: [
-                Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
-                const SizedBox(width: 4),
-                Expanded(child: Text('云同步和内置备份使用不同的加密密码，数据格式通用，可以互相转换。',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
-              ]),
-            ],
-          ),
-        ),
-      ),
-    ]);
-  }
-
-  Widget _tip(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('• ', style: TextStyle(fontSize: 12)),
-        Expanded(child: Text(text, style: const TextStyle(fontSize: 12))),
-      ]),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════
-  //  登录 / 注册 / 忘记密码 / 同步操作
-  // ═══════════════════════════════════════════════════
+  // ════════════════════════════════════════════
+  //  登录 / 注册 / 忘记密码
+  // ════════════════════════════════════════════
 
   Future<void> _showLoginDialog() async {
     final uCtrl = TextEditingController(), pCtrl = TextEditingController(), tCtrl = TextEditingController();
@@ -730,12 +689,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   void _dispose(List<TextEditingController> cs, List<FocusNode> ns) {
-    for (var c in cs) {
-      c.dispose();
-    }
-    for (var n in ns) {
-      n.dispose();
-    }
+    for (var c in cs) { c.dispose(); }
+    for (var n in ns) { n.dispose(); }
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -780,6 +735,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       context.showSnackBar('密码已重置成功');
     } catch (e) { context.showSnackBar('重置失败: $e'); }
   }
+
+  // ════════════════════════════════════════════
+  //  同步操作
+  // ════════════════════════════════════════════
 
   Future<void> _doSync() async {
     final p = await _requirePwd();
