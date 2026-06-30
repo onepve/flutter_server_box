@@ -7,11 +7,18 @@ abstract final class SyncConfig {
   /// 同步服务端地址（硬编码，不允许用户修改）
   static const serverUrl = 'https://sync.onepve.com';
 
+  /// Web 端个人资料页（用于 TOTP 绑定等复杂操作）
+  static const webProfileUrl = '$serverUrl/profile';
+
   /// API 端点
   static const _base = '/api';
   static const register = '$_base/auth/register';
   static const login = '$_base/auth/login';
   static const profile = '$_base/auth/profile';
+  static const changeUsername = '$_base/auth/profile/username';
+  static const changeNickname = '$_base/auth/profile/nickname';
+  static const changeEmail = '$_base/auth/profile/email';
+  static const changePassword = '$_base/auth/profile/password';
   static const forgotPassword = '$_base/auth/forgot-password';
   static const resetPassword = '$_base/auth/reset-password';
   static const syncUpload = '$_base/sync/upload';
@@ -25,6 +32,7 @@ abstract final class SyncConfig {
   static final username = SecureProp('sync_username');
   static final nickname = SecureProp('sync_nickname');
   static final avatarUrl = SecureProp('sync_avatar_url');
+  static final email = SecureProp('sync_email');
   static final _deviceId = SecureProp('sync_device_id');
 
   /// 当前设备唯一标识（首次生成后持久化）

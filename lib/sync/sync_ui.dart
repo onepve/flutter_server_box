@@ -5,6 +5,7 @@ import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_engine.dart';
 import 'package:server_box/sync/sync_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// 服务端同步设置页面
 ///
@@ -12,6 +13,7 @@ import 'package:server_box/sync/sync_provider.dart';
 /// - 账号密码登录
 /// - 一键同步（上传/下载）
 /// - 同步状态查看
+/// - 个人资料查看（含 TOTP 引导）
 class ServerSyncPage extends ConsumerStatefulWidget {
   const ServerSyncPage({super.key});
 
@@ -54,25 +56,320 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
   }
 
-  // ── 登录状态 ──
+  // ═══════════════════════════════════════════════════════════
+  //  登录状态（头像 + 昵称，可点击查看详细资料）
+  // ═══════════════════════════════════════════════════════════
+
+  String _displayName(SyncState s) {
+    if (s.nickname != null && s.nickname!.isNotEmpty) return s.nickname!;
+    if (s.username != null && s.username!.isNotEmpty) return s.username!;
+    return '未知';
+  }
+
+  String _displaySubtitle(SyncState s) {
+    final parts = <String>[];
+    if (s.nickname != null && s.nickname!.isNotEmpty) {
+      parts.add('用户名: ${s.username ?? "—"}');
+    }
+    if (s.email != null && s.email!.isNotEmpty) {
+      parts.add(s.email!);
+    }
+    if (parts.isEmpty) return '已登录';
+    return parts.join('  |  ');
+  }
 
   Widget _buildLoginStatus(SyncState syncState) {
+    final avatarUrl = syncState.avatarUrl;
+    final bool hasAvatar = avatarUrl != null && avatarUrl.isNotEmpty;
+    final fullAvatarUrl = hasAvatar
+        ? (avatarUrl.startsWith('http')
+            ? avatarUrl
+            : '${SyncConfig.serverUrl}$avatarUrl')
+        : null;
+
     return CardX(
-      child: ListTile(
-        leading: Icon(
-          syncState.loggedIn ? Icons.cloud_done : Icons.cloud_off,
-          color: syncState.loggedIn ? Colors.green : Colors.grey,
-        ),
-        title: Text(syncState.loggedIn ? '已登录' : '未登录'),
-        subtitle: Text(
-          syncState.loggedIn
-              ? '账号: ${syncState.username ?? "未知"}'
-              : '请使用同步账号登录',
-          style: UIs.textGrey,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: syncState.loggedIn
+            ? () => _showProfileDialog(context, syncState)
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── 头像（居中） ──
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: Colors.grey.shade200,
+                    backgroundImage:
+                        fullAvatarUrl != null ? NetworkImage(fullAvatarUrl) : null,
+                    child: fullAvatarUrl == null
+                        ? Icon(
+                            syncState.loggedIn
+                                ? Icons.person
+                                : Icons.cloud_off,
+                            size: 28,
+                            color: syncState.loggedIn
+                                ? Colors.grey.shade500
+                                : Colors.grey,
+                          )
+                        : null,
+                  ),
+                  if (syncState.loggedIn)
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              UIs.height10,
+              // ── 昵称/用户名 ──
+              Text(
+                _displayName(syncState),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              UIs.height4,
+              // ── 详细信息 ──
+              Text(
+                _displaySubtitle(syncState),
+                style: UIs.textGrey?.copyWith(fontSize: 12),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (syncState.loggedIn) ...[
+                UIs.height4,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      syncState.totpEnabled
+                          ? Icons.lock
+                          : Icons.lock_open,
+                      size: 12,
+                      color: syncState.totpEnabled
+                          ? Colors.green
+                          : Colors.orange.shade400,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      syncState.totpEnabled ? 'TOTP 已开启' : 'TOTP 未开启',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: syncState.totpEnabled
+                            ? Colors.green
+                            : Colors.orange.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+                UIs.height6,
+                Text(
+                  '点击查看详细资料',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade400,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  // ═══════════════════════════════════════════════════════════
+  //  个人资料详情弹窗
+  // ═══════════════════════════════════════════════════════════
+
+  Future<void> _showProfileDialog(BuildContext context, SyncState s) async {
+    // 先刷新资料
+    final notifier = ref.read(syncNotifierProvider.notifier);
+    unawaited(notifier.refreshProfile());
+
+    await context.showRoundDialog(
+      title: '个人资料',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 头像
+          Center(
+            child: CircleAvatar(
+              radius: 36,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: (s.avatarUrl != null && s.avatarUrl!.isNotEmpty)
+                  ? NetworkImage(
+                      s.avatarUrl!.startsWith('http')
+                          ? s.avatarUrl!
+                          : '${SyncConfig.serverUrl}${s.avatarUrl}',
+                    )
+                  : null,
+              child: (s.avatarUrl == null || s.avatarUrl!.isEmpty)
+                  ? Icon(Icons.person, size: 32, color: Colors.grey.shade500)
+                  : null,
+            ),
+          ),
+          UIs.height13,
+          _profileRow('用户名', s.username ?? '—'),
+          _profileRow('昵称', (s.nickname != null && s.nickname!.isNotEmpty) ? s.nickname : '未设置'),
+          _profileRow('邮箱', s.email ?? '—'),
+          _profileRow(
+            '邮箱验证',
+            s.emailVerified ? '已验证 ✓' : '未验证',
+            valueColor: s.emailVerified ? Colors.green : Colors.orange,
+          ),
+          _profileRow(
+            'TOTP 双因素认证',
+            s.totpEnabled ? '已开启 ✓' : '未开启',
+            valueColor: s.totpEnabled ? Colors.green : Colors.orange.shade400,
+          ),
+          UIs.height13,
+          if (!s.totpEnabled)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16, color: Colors.orange.shade700),
+                      const SizedBox(width: 6),
+                      Text(
+                        '建议开启 TOTP 保护账号安全',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.orange.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '由于手机端扫码不便，建议在电脑浏览器中开启 TOTP。'
+                    '登录网页端后进入个人资料页即可绑定 Authenticator。',
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.open_in_browser, size: 16),
+                      label: const Text('在网页端开启 TOTP'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange.shade600,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                      onPressed: () {
+                        _openWebProfile(context);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (s.totpEnabled)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, size: 16, color: Colors.green.shade700),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'TOTP 已开启，账号受保护。如需管理 TOTP 设置，请在网页端操作。',
+                      style: TextStyle(fontSize: 12, color: Colors.green.shade700),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: const Text('关闭'),
+        ),
+      ],
+    );
+  }
+
+  Widget _profileRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: valueColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openWebProfile(BuildContext context) async {
+    final url = Uri.parse(SyncConfig.webProfileUrl);
+    try {
+      final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        await launchUrl(url, mode: LaunchMode.inAppWebView);
+      }
+    } catch (e) {
+      context.showSnackBar('无法打开浏览器: $e');
+      // 降级：复制链接
+      await Clipboard.setData(ClipboardData(text: url.toString()));
+      context.showSnackBar('链接已复制到剪贴板，请在浏览器中打开');
+    }
+  }
+
+  // ── 登录按钮 ──
 
   Widget _buildLoginButton(SyncState syncState) {
     return CardX(
@@ -277,7 +574,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
   }
 
-  // ── 操作 ──
+  // ── 登录 ──
 
   Future<void> _showLoginDialog(BuildContext context) async {
     final usernameCtrl = TextEditingController();
@@ -487,16 +784,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   /// 获取同步密码
-  ///
-  /// 优先使用登录时的密码（从 SecureProp 读取），如果不存在则弹窗让用户输入。
   Future<String?> _requirePassword(BuildContext context) async {
-    // 使用登录密码作为加密密码（密钥从密码派生）
     final savedPwd = await SecureStoreProps.bakPwd.read();
     if (savedPwd != null && savedPwd.isNotEmpty) {
       return savedPwd;
     }
 
-    // 弹窗让用户输入加密密码
     final controller = TextEditingController();
     final result = await context.showRoundDialog<bool>(
       title: '同步加密密码',
@@ -530,14 +823,18 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     return null;
   }
 
-  // ── 注册 ──
+  // ═══════════════════════════════════════════════════════════
+  //  注册（含昵称字段）
+  // ═══════════════════════════════════════════════════════════
 
   Future<void> _showRegisterDialog(BuildContext context) async {
     final usernameCtrl = TextEditingController();
+    final nicknameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
     final inviteCodeCtrl = TextEditingController();
     final usernameNode = FocusNode();
+    final nicknameNode = FocusNode();
     final emailNode = FocusNode();
     final passwordNode = FocusNode();
     final inviteCodeNode = FocusNode();
@@ -553,21 +850,28 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           ),
           UIs.height13,
           Input(
-            label: '用户名',
+            label: '用户名 *',
             controller: usernameCtrl,
             node: usernameNode,
+            onSubmitted: (_) => nicknameNode.requestFocus(),
+          ),
+          UIs.height7,
+          Input(
+            label: '昵称（选填）',
+            controller: nicknameCtrl,
+            node: nicknameNode,
             onSubmitted: (_) => emailNode.requestFocus(),
           ),
           UIs.height7,
           Input(
-            label: '邮箱地址',
+            label: '邮箱地址 *',
             controller: emailCtrl,
             node: emailNode,
             onSubmitted: (_) => passwordNode.requestFocus(),
           ),
           UIs.height7,
           Input(
-            label: '密码',
+            label: '密码 *',
             controller: passwordCtrl,
             node: passwordNode,
             obscureText: true,
@@ -575,7 +879,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           ),
           UIs.height7,
           Input(
-            label: '邀请码',
+            label: '邀请码 *',
             controller: inviteCodeCtrl,
             node: inviteCodeNode,
             onSubmitted: (_) => context.pop(true),
@@ -596,20 +900,17 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
 
     if (result == true) {
       final username = usernameCtrl.text.trim();
+      final nickname = nicknameCtrl.text.trim();
       final email = emailCtrl.text.trim();
       final password = passwordCtrl.text.trim();
       final inviteCode = inviteCodeCtrl.text.trim();
 
       if (username.isEmpty || email.isEmpty || password.isEmpty || inviteCode.isEmpty) {
-        context.showSnackBar('请填写所有字段');
-        usernameCtrl.dispose();
-        emailCtrl.dispose();
-        passwordCtrl.dispose();
-        inviteCodeCtrl.dispose();
-        usernameNode.dispose();
-        emailNode.dispose();
-        passwordNode.dispose();
-        inviteCodeNode.dispose();
+        context.showSnackBar('请填写所有必填字段（带 * 号）');
+        _disposeRegCtrls(
+          usernameCtrl, nicknameCtrl, emailCtrl, passwordCtrl, inviteCodeCtrl,
+          usernameNode, nicknameNode, emailNode, passwordNode, inviteCodeNode,
+        );
         return;
       }
 
@@ -617,6 +918,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         final resp = await context.showLoadingDialog(
           fn: () => SyncClient.shared.register(
             username: username,
+            nickname: nickname.isNotEmpty ? nickname : null,
             email: email,
             password: password,
             inviteCode: inviteCode,
@@ -673,20 +975,29 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       }
     }
 
-    usernameCtrl.dispose();
-    emailCtrl.dispose();
-    passwordCtrl.dispose();
-    inviteCodeCtrl.dispose();
-    usernameNode.dispose();
-    emailNode.dispose();
-    passwordNode.dispose();
-    inviteCodeNode.dispose();
+    _disposeRegCtrls(
+      usernameCtrl, nicknameCtrl, emailCtrl, passwordCtrl, inviteCodeCtrl,
+      usernameNode, nicknameNode, emailNode, passwordNode, inviteCodeNode,
+    );
   }
 
-  // ── 忘记密码 ──
+  void _disposeRegCtrls(
+    TextEditingController u, TextEditingController n,
+    TextEditingController e, TextEditingController p,
+    TextEditingController i,
+    FocusNode un, FocusNode nn, FocusNode en,
+    FocusNode pn, FocusNode ino,
+  ) {
+    u.dispose(); n.dispose(); e.dispose(); p.dispose(); i.dispose();
+    un.dispose(); nn.dispose(); en.dispose(); pn.dispose(); ino.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  //  忘记密码（支持用户名或邮箱）
+  // ═══════════════════════════════════════════════════════════
 
   Future<void> _showForgotPasswordDialog(BuildContext context) async {
-    final emailCtrl = TextEditingController();
+    final identifierCtrl = TextEditingController();
     final node = FocusNode();
 
     final result = await context.showRoundDialog<bool>(
@@ -695,13 +1006,13 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '输入注册邮箱，获取重置令牌',
+            '输入用户名或注册邮箱，获取重置令牌',
             style: UIs.textGrey,
           ),
           UIs.height13,
           Input(
-            label: '邮箱地址',
-            controller: emailCtrl,
+            label: '用户名 / 邮箱地址',
+            controller: identifierCtrl,
             node: node,
             onSubmitted: (_) => context.pop(true),
           ),
@@ -711,17 +1022,17 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     );
 
     if (result == true) {
-      final email = emailCtrl.text.trim();
-      if (email.isEmpty) {
-        context.showSnackBar('请输入邮箱');
-        emailCtrl.dispose();
+      final identifier = identifierCtrl.text.trim();
+      if (identifier.isEmpty) {
+        context.showSnackBar('请输入用户名或邮箱');
+        identifierCtrl.dispose();
         node.dispose();
         return;
       }
 
       try {
         final resp = await context.showLoadingDialog(
-          fn: () => SyncClient.shared.forgotPassword(email: email),
+          fn: () => SyncClient.shared.forgotPassword(usernameOrEmail: identifier),
         );
 
         if (resp.$1 != null) {
@@ -781,7 +1092,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       }
     }
 
-    emailCtrl.dispose();
+    identifierCtrl.dispose();
     node.dispose();
   }
 

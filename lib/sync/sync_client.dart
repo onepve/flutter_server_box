@@ -72,6 +72,33 @@ class SyncClient {
     );
   }
 
+  /// 获取用户完整资料（用户名、昵称、邮箱、TOTP 状态等）
+  Future<({
+    int id,
+    String uuid,
+    String username,
+    String? nickname,
+    String email,
+    bool emailVerified,
+    bool totpEnabled,
+    bool isActive,
+    String? avatarUrl,
+  })> getProfile() async {
+    final resp = await _dio.get(SyncConfig.profile);
+    final data = resp.data as Map<String, dynamic>;
+    return (
+      id: data['id'] as int,
+      uuid: data['uuid'] as String,
+      username: data['username'] as String,
+      nickname: data['nickname'] as String?,
+      email: data['email'] as String,
+      emailVerified: data['email_verified'] as bool,
+      totpEnabled: data['totp_enabled'] as bool,
+      isActive: data['is_active'] as bool,
+      avatarUrl: data['avatar_url'] as String?,
+    );
+  }
+
   /// 上传加密数据
   Future<int> upload({
     required String ciphertext,
@@ -142,16 +169,21 @@ class SyncClient {
   /// 注册新账号
   Future<({String message, String? recoveryKey})> register({
     required String username,
+    String? nickname,
     required String email,
     required String password,
     required String inviteCode,
   }) async {
-    final resp = await _dio.post(SyncConfig.register, data: {
+    final body = <String, dynamic>{
       'username': username,
       'email': email,
       'password': password,
       'invite_code': inviteCode,
-    });
+    };
+    if (nickname != null && nickname.trim().isNotEmpty) {
+      body['nickname'] = nickname.trim();
+    }
+    final resp = await _dio.post(SyncConfig.register, data: body);
     final data = resp.data as Map<String, dynamic>;
     return (
       message: data['message'] as String? ?? '注册成功',
@@ -159,12 +191,12 @@ class SyncClient {
     );
   }
 
-  /// 忘记密码，获取重置令牌
+  /// 忘记密码，获取重置令牌（支持用户名或邮箱）
   Future<({String message, String? token})> forgotPassword({
-    required String email,
+    required String usernameOrEmail,
   }) async {
     final resp = await _dio.post(SyncConfig.forgotPassword, data: {
-      'email': email,
+      'username_or_email': usernameOrEmail,
     });
     final data = resp.data as Map<String, dynamic>;
     return (

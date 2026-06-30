@@ -15,6 +15,11 @@ final _logger = Logger('SyncProvider');
 class SyncState {
   final bool loggedIn;
   final String? username;
+  final String? nickname;
+  final String? avatarUrl;
+  final String? email;
+  final bool emailVerified;
+  final bool totpEnabled;
   final int serverVersion;
   final int localVersion;
   final bool syncing;
@@ -25,6 +30,11 @@ class SyncState {
   const SyncState({
     this.loggedIn = false,
     this.username,
+    this.nickname,
+    this.avatarUrl,
+    this.email,
+    this.emailVerified = false,
+    this.totpEnabled = false,
     this.serverVersion = 0,
     this.localVersion = 0,
     this.syncing = false,
@@ -36,6 +46,11 @@ class SyncState {
   SyncState copyWith({
     bool? loggedIn,
     String? username,
+    String? nickname,
+    String? avatarUrl,
+    String? email,
+    bool? emailVerified,
+    bool? totpEnabled,
     int? serverVersion,
     int? localVersion,
     bool? syncing,
@@ -47,6 +62,11 @@ class SyncState {
     return SyncState(
       loggedIn: loggedIn ?? this.loggedIn,
       username: username ?? this.username,
+      nickname: nickname ?? this.nickname,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      email: email ?? this.email,
+      emailVerified: emailVerified ?? this.emailVerified,
+      totpEnabled: totpEnabled ?? this.totpEnabled,
       serverVersion: serverVersion ?? this.serverVersion,
       localVersion: localVersion ?? this.localVersion,
       syncing: syncing ?? this.syncing,
@@ -73,10 +93,45 @@ class SyncNotifier extends Notifier<SyncState> {
   Future<void> _init() async {
     final token = await SyncConfig.token.read();
     final name = await SyncConfig.username.read();
+    final nick = await SyncConfig.nickname.read();
+    final avatar = await SyncConfig.avatarUrl.read();
+    final mail = await SyncConfig.email.read();
     if (token != null && token.isNotEmpty && name != null) {
-      state = state.copyWith(loggedIn: true, username: name);
+      state = state.copyWith(
+        loggedIn: true,
+        username: name,
+        nickname: nick,
+        avatarUrl: avatar,
+        email: mail,
+      );
+      // 后台静默刷新完整资料
+      _refreshProfile();
     }
   }
+
+  /// 后台刷新用户资料（不阻塞 UI）
+  Future<void> _refreshProfile() async {
+    try {
+      final profile = await SyncClient.shared.getProfile();
+      await SyncConfig.username.write(profile.username);
+      await SyncConfig.nickname.write(profile.nickname ?? '');
+      await SyncConfig.avatarUrl.write(profile.avatarUrl ?? '');
+      await SyncConfig.email.write(profile.email);
+      state = state.copyWith(
+        username: profile.username,
+        nickname: profile.nickname,
+        avatarUrl: profile.avatarUrl,
+        email: profile.email,
+        emailVerified: profile.emailVerified,
+        totpEnabled: profile.totpEnabled,
+      );
+    } catch (e) {
+      _logger.fine('Background profile refresh failed: $e');
+    }
+  }
+
+  /// 公开的刷新资料方法（UI 可调用）
+  Future<void> refreshProfile() => _refreshProfile();
 
   /// 登录
   Future<String?> login({
@@ -93,11 +148,21 @@ class SyncNotifier extends Notifier<SyncState> {
       );
       await SyncConfig.token.write(result.token);
       await SyncConfig.username.write(result.username);
+      if (result.nickname != null) {
+        await SyncConfig.nickname.write(result.nickname);
+      }
+      if (result.avatarUrl != null) {
+        await SyncConfig.avatarUrl.write(result.avatarUrl);
+      }
       state = state.copyWith(
         loggedIn: true,
         username: result.username,
+        nickname: result.nickname,
+        avatarUrl: result.avatarUrl,
         syncing: false,
       );
+      // 异步获取完整资料
+      _refreshProfile();
       return null;
     } on SyncTOTPRequiredException {
       state = state.copyWith(syncing: false);
@@ -113,6 +178,9 @@ class SyncNotifier extends Notifier<SyncState> {
   Future<void> logout() async {
     await SyncConfig.token.write(null);
     await SyncConfig.username.write(null);
+    await SyncConfig.nickname.write(null);
+    await SyncConfig.avatarUrl.write(null);
+    await SyncConfig.email.write(null);
     state = const SyncState();
   }
 
