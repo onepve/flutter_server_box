@@ -101,7 +101,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         onTap: s.loggedIn ? () => _showProfileDialog(s) : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
             CircleAvatar(
               radius: 30,
               backgroundColor: Colors.grey.shade200,
@@ -224,28 +228,66 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   ));
 
   List<Widget> _loggedInItems(SyncState s) => [
-    CardX(child: ListTile(
-      leading: const Icon(Icons.logout), title: const Text('退出登录'),
-      onTap: () async { await ref.read(syncNotifierProvider.notifier).logout(); setState(() {}); },
-    )),
+    // ── 退出登录 + 删除数据 左右对称 ──
+    Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: CardX(
+              child: ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('退出登录', style: TextStyle(fontSize: 14)),
+                onTap: () async { await ref.read(syncNotifierProvider.notifier).logout(); setState(() {}); },
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: CardX(
+              child: ListTile(
+                leading: const Icon(Icons.delete_forever, color: Colors.red),
+                title: const Text('删除数据', style: TextStyle(fontSize: 14, color: Colors.red)),
+                onTap: () => _startDeleteFlow(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
     if (s.lastSyncAt > 0)
       CardX(child: ListTile(leading: const Icon(Icons.history), title: const Text('上次同步'),
         subtitle: Text(s.lastSyncMessage ?? '未知', style: UIs.textGrey))),
     if (s.error != null)
       CardX(child: ListTile(leading: const Icon(Icons.error_outline, color: Colors.red),
         title: Text(s.error!, style: const TextStyle(color: Colors.red)))),
-    CardX(child: ListTile(
-      leading: const Icon(Icons.delete_forever, color: Colors.red),
-      title: const Text('删除同步数据', style: TextStyle(color: Colors.red)),
-      subtitle: Text('清空服务端加密数据（需身份验证）', style: UIs.textGrey),
-      onTap: () => _startDeleteFlow(),
-    )),
-    CardX(child: ListTile(
-      leading: const Icon(Icons.person_remove, color: Colors.red),
-      title: const Text('注销账号', style: TextStyle(color: Colors.red)),
-      subtitle: Text('永久删除账号及所有数据（不可恢复）', style: UIs.textGrey),
-      onTap: () => _startAccountDeleteFlow(),
-    )),
+    // ── 注销账号说明 ──
+    CardX(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(Icons.info_outline, size: 16, color: Colors.grey.shade500),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  text: '注销账号请 ',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  children: [
+                    TextSpan(
+                      text: '前往网站自助操作',
+                      style: TextStyle(color: Colors.blue.shade600, decoration: TextDecoration.underline),
+                    ),
+                    const TextSpan(text: '（设置 → 个人信息 → 底部危险区域）'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
   ];
 
   Widget _syncButtons(SyncState s) {
@@ -663,10 +705,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     final uN = FocusNode(), nN = FocusNode(), eN = FocusNode(), pN = FocusNode(), iN = FocusNode();
     final r = await context.showRoundDialog<bool>(title: '注册同步账号', child: Column(mainAxisSize: MainAxisSize.min, children: [
       Text('需要邀请码才能注册', style: UIs.textGrey), UIs.height13,
-      Input(label: '用户名 *', controller: uCtrl, node: uN, onSubmitted: (_) => nN.requestFocus()), UIs.height7,
-      Input(label: '昵称（选填）', controller: nCtrl, node: nN, onSubmitted: (_) => eN.requestFocus()), UIs.height7,
+      Input(label: '用户名 *（英文数字下划线，3-64位）', controller: uCtrl, node: uN, onSubmitted: (_) => nN.requestFocus()), UIs.height7,
+      Input(label: '昵称（选填，中英文64位内）', controller: nCtrl, node: nN, onSubmitted: (_) => eN.requestFocus()), UIs.height7,
       Input(label: '邮箱地址 *', controller: eCtrl, node: eN, onSubmitted: (_) => pN.requestFocus()), UIs.height7,
-      Input(label: '密码 *', controller: pCtrl, node: pN, obscureText: true, onSubmitted: (_) => iN.requestFocus()), UIs.height7,
+      Input(label: '密码 *（8-128位）', controller: pCtrl, node: pN, obscureText: true, onSubmitted: (_) => iN.requestFocus()), UIs.height7,
       Input(label: '邀请码 *', controller: iCtrl, node: iN, onSubmitted: (_) => context.pop(true)),
     ]), actions: [TextButton(onPressed: () => context.pop(false), child: const Text('取消')), ElevatedButton(onPressed: () => context.pop(true), child: const Text('注册'))]);
     if (r != true) { _dispose([uCtrl,nCtrl,eCtrl,pCtrl,iCtrl],[uN,nN,eN,pN,iN]); return; }
