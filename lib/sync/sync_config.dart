@@ -23,6 +23,8 @@ abstract final class SyncConfig {
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');
   static final username = SecureProp('sync_username');
+  static final nickname = SecureProp('sync_nickname');
+  static final avatarUrl = SecureProp('sync_avatar_url');
   static final _deviceId = SecureProp('sync_device_id');
 
   /// 当前设备唯一标识（首次生成后持久化）

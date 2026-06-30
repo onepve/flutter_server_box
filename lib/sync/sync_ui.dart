@@ -78,7 +78,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     return CardX(
       child: ListTile(
         leading: const Icon(Icons.login),
-        title: Text('登录到 ${SyncConfig.serverUrl}'),
+        title: const Text('登录同步账户'),
         subtitle: Text(
           '服务端地址已固定，无需手动配置',
           style: UIs.textGrey,
@@ -287,12 +287,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     final passwordNode = FocusNode();
 
     final result = await context.showRoundDialog<bool>(
-      title: '登录同步服务',
+      title: '登录同步账户',
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('服务端地址: ${SyncConfig.serverUrl}', style: UIs.textGrey.copyWith(fontSize: 12)),
-          UIs.height13,
           Input(
             label: '用户名',
             controller: usernameCtrl,
