@@ -69,3 +69,5 @@ trans.txt
 android/app/.cxx
 .env.release
 .env
+key.properties
+release.keystore

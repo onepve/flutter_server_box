@@ -901,6 +901,9 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
 
       if (newUrl.$1 != null) {
         await SyncConfig.avatarUrl.write(newUrl.$1);
+        // 立即更新 Riverpod 状态→两个头像位置同步刷新
+        ref.read(syncNotifierProvider.notifier).updateAvatarUrl(newUrl.$1);
+        // 后台刷新完整资料（更新昵称等）
         ref.read(syncNotifierProvider.notifier).refreshProfile();
         if (context.mounted) {
           context.showSnackBar('头像上传成功');

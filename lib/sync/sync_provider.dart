@@ -138,6 +138,11 @@ class SyncNotifier extends Notifier<SyncState> {
   /// 公开的刷新资料方法（UI 可调用）
   Future<void> refreshProfile() => _refreshProfile();
 
+  /// 直接更新头像 URL（上传成功后立即调用，无需等 HTTP 往返）
+  void updateAvatarUrl(String url) {
+    state = state.copyWith(avatarUrl: url);
+  }
+
   /// 登录
   Future<String?> login({
     required String username,
