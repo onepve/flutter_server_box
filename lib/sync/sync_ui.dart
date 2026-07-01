@@ -103,16 +103,17 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-              child: avatarUrl.isEmpty
-                  ? Icon(Icons.person, size: 26, color: Colors.grey.shade500)
-                  : null,
+            Center(
+              child: CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                child: avatarUrl.isEmpty
+                    ? Icon(Icons.person, size: 26, color: Colors.grey.shade500)
+                    : null,
+              ),
             ),
             const SizedBox(height: 10),
             Text(_displayName(s), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
