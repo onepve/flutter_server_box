@@ -1,0 +1,1123 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'l10n.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for German (`de`).
+class AppLocalizationsDe extends AppLocalizations {
+  AppLocalizationsDe([String locale = 'de']) : super(locale);
+
+  @override
+  String get aboutThanks =>
+      'Vielen Dank an die folgenden Personen, die daran teilgenommen haben.\n';
+
+  @override
+  String get acceptBeta => 'Akzeptieren Sie Testversion-Updates';
+
+  @override
+  String get addSystemPrivateKeyTip =>
+      'Derzeit haben Sie keinen privaten Schlüssel, fügen Sie den Schlüssel hinzu, der mit dem System geliefert wird (~/.ssh/id_rsa)?';
+
+  @override
+  String get added2List => 'Zur Aufgabenliste hinzugefügt';
+
+  @override
+  String get addr => 'Adresse';
+
+  @override
+  String get alreadyLastDir => 'Bereits im letzten Verzeichnis.';
+
+  @override
+  String get askAi => 'KI fragen';
+
+  @override
+  String get ai => 'AI';
+
+  @override
+  String get askAiApiKey => 'API-Schlüssel';
+
+  @override
+  String get askAiAwaitingResponse => 'Warte auf KI-Antwort...';
+
+  @override
+  String get askAiBaseUrl => 'Basis-URL';
+
+  @override
+  String get askAiEndpointTip =>
+      'Enter the full Chat Completions endpoint, or a service base URL. If the address ends with /v1, the app will append /chat/completions.';
+
+  @override
+  String get askAiCommandInserted => 'Befehl ins Terminal eingefügt';
+
+  @override
+  String askAiConfigMissing(Object fields) {
+    return 'Bitte konfigurieren Sie $fields in den Einstellungen.';
+  }
+
+  @override
+  String get askAiConfirmExecute => 'Vor Ausführung bestätigen';
+
+  @override
+  String get askAiConversation => 'KI-Unterhaltung';
+
+  @override
+  String get askAiDisclaimer =>
+      'KI kann Fehler machen. Bitte vorsichtig verwenden.';
+
+  @override
+  String get askAiFollowUpHint => 'Weitere Frage stellen...';
+
+  @override
+  String get askAiInsertTerminal => 'In Terminal einfügen';
+
+  @override
+  String get askAiNoResponse => 'Keine Antwort';
+
+  @override
+  String get askAiRecommendedCommand => 'KI-empfohlener Befehl';
+
+  @override
+  String get askAiSelectedContent => 'Ausgewählter Inhalt';
+
+  @override
+  String get askAiUsageHint => 'Verwendet im SSH-Terminal';
+
+  @override
+  String get atLeastOneTab => 'Mindestens ein Tab muss ausgewählt sein';
+
+  @override
+  String get authFailTip =>
+      'Authentifizierung fehlgeschlagen, bitte überprüfen Sie, ob das Passwort/Schlüssel/Host/Benutzer usw. falsch sind.';
+
+  @override
+  String get autoBackupConflict =>
+      'Es kann nur eine automatische Sicherung gleichzeitig aktiviert werden.';
+
+  @override
+  String get autoConnect => 'Automatisch verbinden';
+
+  @override
+  String get autoRun => 'Automatischer Start';
+
+  @override
+  String get autoUpdateHomeWidget => 'Home-Widget automatisch aktualisieren';
+
+  @override
+  String get availableTabs => 'Verfügbare Tabs';
+
+  @override
+  String get backupEncrypted => 'Backup ist verschlüsselt';
+
+  @override
+  String get backupNotEncrypted => 'Backup ist nicht verschlüsselt';
+
+  @override
+  String get backupPassword => 'Backup-Passwort';
+
+  @override
+  String get backupPasswordRemoved => 'Backup-Passwort entfernt';
+
+  @override
+  String get backupPasswordSet => 'Backup-Passwort gesetzt';
+
+  @override
+  String get backupPasswordTip =>
+      'Setzen Sie ein Passwort, um Backup-Dateien zu verschlüsseln. Leer lassen, um Verschlüsselung zu deaktivieren.';
+
+  @override
+  String get backupPasswordWrong => 'Falsches Backup-Passwort';
+
+  @override
+  String get backupTip =>
+      'Die exportierten Daten können mit einem Passwort verschlüsselt werden. \nBitte sicher aufbewahren.';
+
+  @override
+  String get backupVersionNotMatch =>
+      'Die Backup-Version stimmt nicht überein.';
+
+  @override
+  String get icloudBackupStatusTitle => 'Backup status';
+
+  @override
+  String get icloudBackupStatusLoading => 'Loading iCloud backup status...';
+
+  @override
+  String get icloudBackupStatusError => 'Unable to read iCloud backup metadata';
+
+  @override
+  String get icloudBackupStatusEmpty => 'No iCloud backup file found yet';
+
+  @override
+  String get icloudBackupStateUploading => 'Uploading';
+
+  @override
+  String get icloudBackupStateConflict => 'Conflict detected';
+
+  @override
+  String get icloudBackupStateUploaded => 'Uploaded';
+
+  @override
+  String get icloudBackupStateWaiting => 'Waiting for iCloud';
+
+  @override
+  String icloudBackupStatusSummary(Object lastModified, Object remoteState) {
+    return 'Last backup: $lastModified\nStatus: $remoteState';
+  }
+
+  @override
+  String get bgRun => 'Hintergrundaktualisierung';
+
+  @override
+  String get bgRunTip =>
+      'Dieser Schalter bedeutet nur, dass die App versuchen wird, im Hintergrund zu laufen. Ob sie im Hintergrund laufen kann, hängt davon ab, ob die Berechtigungen aktiviert sind oder nicht. Bei nativem Android deaktivieren Sie bitte \"Batterieoptimierung\" in dieser App, und bei miui ändern Sie bitte die Energiesparrichtlinie auf \"Unbegrenzt\".';
+
+  @override
+  String get clearAllStatsContent =>
+      'Sind Sie sicher, dass Sie alle Server-Verbindungsstatistiken löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
+
+  @override
+  String get clearAllStatsTitle => 'Alle Statistiken löschen';
+
+  @override
+  String clearServerStatsContent(Object serverName) {
+    return 'Sind Sie sicher, dass Sie die Verbindungsstatistiken für Server \"$serverName\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.';
+  }
+
+  @override
+  String clearServerStatsTitle(Object serverName) {
+    return '$serverName Statistiken löschen';
+  }
+
+  @override
+  String get clearThisServerStats => 'Statistiken dieses Servers löschen';
+
+  @override
+  String get compactDatabase => 'Datenbank komprimieren';
+
+  @override
+  String compactDatabaseContent(Object size) {
+    return 'Datenbankgröße: $size\n\nDies wird die Datenbank neu organisieren, um die Dateigröße zu reduzieren. Es werden keine Daten gelöscht.';
+  }
+
+  @override
+  String get closeAfterSave => 'Speichern und schließen';
+
+  @override
+  String get collapseUITip =>
+      'Ob lange Listen in der Benutzeroberfläche standardmäßig eingeklappt werden sollen oder nicht';
+
+  @override
+  String get connectionDetails => 'Verbindungsdetails';
+
+  @override
+  String get connectionStats => 'Verbindungsstatistiken';
+
+  @override
+  String get connectionStatsDesc =>
+      'Server-Verbindungserfolgsrate und Verlauf anzeigen';
+
+  @override
+  String get containerTrySudoTip =>
+      'Zum Beispiel: In der App ist der Benutzer auf aaa eingestellt, aber Docker ist unter dem Root-Benutzer installiert. In diesem Fall müssen Sie diese Option aktivieren';
+
+  @override
+  String get containerSudoPasswordRequired =>
+      'Ein sudo-Passwort ist erforderlich, um auf Docker zuzugreifen. Bitte geben Sie Ihr Passwort ein.';
+
+  @override
+  String get containerSudoPasswordIncorrect =>
+      'Das sudo-Passwort ist falsch oder nicht erlaubt. Bitte versuchen Sie es erneut.';
+
+  @override
+  String get convert => 'Konvertieren';
+
+  @override
+  String get copyPath => 'Pfad kopieren';
+
+  @override
+  String get cpuViewAsProgressTip =>
+      'Zeigen Sie die Auslastung jedes CPUs in einem Fortschrittsbalken-Stil an (alter Stil)';
+
+  @override
+  String get cursorType => 'Cursor-Typ';
+
+  @override
+  String get configured => 'Configured';
+
+  @override
+  String get customCmd => 'Benutzerdefinierte Befehle';
+
+  @override
+  String get customCmdHint => '\"Befehlsname\": \"Befehl\"';
+
+  @override
+  String get deleteServers => 'Batch-Löschung von Servern';
+
+  @override
+  String get desktopTerminalTip =>
+      'Befehl zum Öffnen des Terminal-Emulators beim Starten von SSH-Sitzungen.';
+
+  @override
+  String get dirEmpty => 'Stelle sicher, dass der Ordner leer ist.';
+
+  @override
+  String get discoverSshServers => 'SSH-Server entdecken';
+
+  @override
+  String get discoveryFailed => 'Entdeckung fehlgeschlagen';
+
+  @override
+  String get discoverySettings => 'Entdeckungseinstellungen';
+
+  @override
+  String get discoverySummary => 'Entdeckungs-Zusammenfassung';
+
+  @override
+  String get diskHealth => 'Festplattengesundheit';
+
+  @override
+  String get diskIgnorePath => 'Pfad für Datenträger ignorieren';
+
+  @override
+  String get displayCpuIndex => 'Zeigen Sie den CPU-Index an';
+
+  @override
+  String dl2Local(Object fileName) {
+    return 'Datei \"$fileName\" herunterladen?';
+  }
+
+  @override
+  String get dockerEmptyRunningItems =>
+      'Es gibt keine laufenden Container.\nDas könnte daran liegen:\n- Der Docker-Installationsbenutzer ist nicht mit dem in der App konfigurierten Benutzernamen identisch.\n- Die Umgebungsvariable DOCKER_HOST wurde nicht korrekt gelesen. Sie können sie ermitteln, indem Sie `echo \$DOCKER_HOST` im Terminal ausführen.';
+
+  @override
+  String dockerImagesFmt(Object count) {
+    return '$count Image(s)';
+  }
+
+  @override
+  String get dockerNotInstalled => 'Docker ist nicht installiert';
+
+  @override
+  String dockerStatusRunningAndStoppedFmt(
+    Object runningCount,
+    Object stoppedCount,
+  ) {
+    return '$runningCount aktiv, $stoppedCount container gestoppt.';
+  }
+
+  @override
+  String dockerStatusRunningFmt(Object count) {
+    return '$count Container aktiv';
+  }
+
+  @override
+  String get doubleColumnMode => 'Doppelspaltiger Modus';
+
+  @override
+  String get doubleColumnTip =>
+      'Diese Option aktiviert nur die Funktion, ob sie tatsächlich aktiviert werden kann, hängt auch von der Breite des Geräts ab';
+
+  @override
+  String get editVirtKeys => 'Virtuelle Tasten bearbeiten';
+
+  @override
+  String get editorHighlightTip =>
+      'Die Leistung der aktuellen Codehervorhebung ist schlechter und kann zur Verbesserung optional ausgeschaltet werden.';
+
+  @override
+  String get enableMdns => 'mDNS aktivieren';
+
+  @override
+  String get enableMdnsDesc =>
+      'mDNS/Bonjour verwenden, um SSH-Dienste zu entdecken';
+
+  @override
+  String get envVars => 'Umgebungsvariable';
+
+  @override
+  String get experimentalFeature => 'Experimentelles Feature';
+
+  @override
+  String get extraArgs => 'Extra args';
+
+  @override
+  String get fallbackSshDest => 'SSH-Fallback-Ziel';
+
+  @override
+  String get fdroidReleaseTip =>
+      'Wenn Sie diese App von F-Droid heruntergeladen haben, wird empfohlen, diese Option zu deaktivieren.';
+
+  @override
+  String get fgService => 'Vordergrund-Dienst';
+
+  @override
+  String get fgServiceTip =>
+      'Nach dem Einschalten kann es bei einigen Gerätemodellen zu Abstürzen kommen. Das Ausschalten kann bei einigen Modellen dazu führen, dass SSH-Verbindungen im Hintergrund nicht aufrechterhalten werden können. Bitte erlauben Sie ServerBox in den Systemeinstellungen Benachrichtigungsrechte, Hintergrundausführung und Selbstaktivierung.';
+
+  @override
+  String fileTooLarge(Object file, Object size, Object sizeMax) {
+    return 'Datei \'$file\' ist zu groß $size, max $sizeMax';
+  }
+
+  @override
+  String get finishedAt => 'Beendet um';
+
+  @override
+  String get followSystem => 'System verfolgen';
+
+  @override
+  String get fontSize => 'Schriftgröße';
+
+  @override
+  String get fullScreen => 'Vollbildmodus';
+
+  @override
+  String get fullScreenJitter => 'Jitter im Vollbildmodus';
+
+  @override
+  String get fullScreenJitterHelp => 'Einbrennen des Bildschirms verhindern';
+
+  @override
+  String get fullScreenTip =>
+      'Soll der Vollbildmodus aktiviert werden, wenn das Gerät in den Quermodus gedreht wird? Diese Option gilt nur für die Server-Registerkarte.';
+
+  @override
+  String get githubGist => 'GitHub Gist';
+
+  @override
+  String get githubGistIdOptional => 'Gist ID (optional)';
+
+  @override
+  String get githubGistToken => 'GitHub Gist token';
+
+  @override
+  String get githubGistTokenEmpty => 'Token is empty';
+
+  @override
+  String get goBackQ => 'Zurückkommen?';
+
+  @override
+  String get goto => 'Pfad öffnen';
+
+  @override
+  String get hideTitleBar => 'Titelleiste ausblenden';
+
+  @override
+  String get highlight => 'Code highlight';
+
+  @override
+  String get homeTabs => 'Home-Tabs';
+
+  @override
+  String get homeTabsCustomizeDesc =>
+      'Passen Sie an, welche Tabs auf der Startseite angezeigt werden und ihre Reihenfolge';
+
+  @override
+  String get homeWidgetUrlConfig => 'Home-Widget-Link konfigurieren';
+
+  @override
+  String httpFailedWithCode(Object code) {
+    return 'Anfrage fehlgeschlagen, Statuscode: $code';
+  }
+
+  @override
+  String get ignoreCert => 'Zertifikat ignorieren';
+
+  @override
+  String get image => 'Image';
+
+  @override
+  String get imagesList => 'Images';
+
+  @override
+  String get pull => 'Pull';
+
+  @override
+  String get installDockerWithUrl =>
+      'Bitte installiere docker zuerst. https://docs.docker.com/engine/install';
+
+  @override
+  String get invalid => 'Ungültig';
+
+  @override
+  String get invalidUrl => 'Invalid URL';
+
+  @override
+  String get invalidHostFormat =>
+      'Invalid host format. Only IPv4, IPv6, and domain characters are allowed.';
+
+  @override
+  String get jumpServer => 'Server springen';
+
+  @override
+  String jumpServersNotFoundFmt(Object serverName, Object jumpIds) {
+    return 'Jump servers not found for $serverName: $jumpIds';
+  }
+
+  @override
+  String get noJumpServerAvailable => 'No jump server available.';
+
+  @override
+  String get jumpServerAndProxyCommandCannotBeUsedTogether =>
+      'Jump server and ProxyCommand cannot be used together.';
+
+  @override
+  String get keepForeground => 'Stelle sicher, dass die App geöffnet bleibt.';
+
+  @override
+  String get keepStatusWhenErr => 'Den letzten Serverstatus beibehalten';
+
+  @override
+  String get keepStatusWhenErrTip =>
+      'Nur im Fehlerfall während der Ausführung des Skripts';
+
+  @override
+  String get keyAuth => 'Schlüsselauthentifzierung';
+
+  @override
+  String get lastFailure => 'Letzter Fehler';
+
+  @override
+  String get lastSuccess => 'Letzter Erfolg';
+
+  @override
+  String get letterCache => 'Normale Tastatureingabe';
+
+  @override
+  String get letterCacheTip =>
+      'Wenn aktiviert, läuft die Eingabe über die normale IME. Dadurch lassen sich auf manchen Systemen sichere Tastaturhinweise im Terminal vermeiden.';
+
+  @override
+  String madeWithLove(Object myGithub) {
+    return 'Erstellt mit ❤️ von $myGithub';
+  }
+
+  @override
+  String get max => 'max';
+
+  @override
+  String get maxConcurrency => 'Maximale Gleichzeitigkeit';
+
+  @override
+  String get maxRetryCount => 'Anzahl an Verbindungsversuchen';
+
+  @override
+  String get maxRetryCountEqual0 =>
+      'Unbegrenzte Verbindungsversuche zum Server';
+
+  @override
+  String get min => 'min';
+
+  @override
+  String mismatchSystem(Object system) {
+    return 'Nicht übereinstimmendes System: $system';
+  }
+
+  @override
+  String get more => 'Mehr';
+
+  @override
+  String get moveOutServerFuncBtnsHelp =>
+      'Ein: kann unter jeder Karte auf der Registerkarte \"Server\" angezeigt werden. Aus: kann oben auf der Seite \"Serverdetails\" angezeigt werden.';
+
+  @override
+  String get needHomeDir =>
+      'Wenn Sie ein Synology-Benutzer sind, [sehen Sie hier](https://kb.synology.com/DSM/tutorial/user_enable_home_service). Benutzer anderer Systeme müssen suchen, wie man ein Home-Verzeichnis erstellt.';
+
+  @override
+  String get needRestart => 'App muss neugestartet werden';
+
+  @override
+  String get netViewType => 'Netzwerkansicht Typ';
+
+  @override
+  String get newContainer => 'Neuer Container';
+
+  @override
+  String get noConnectionStatsData => 'Keine Verbindungsstatistikdaten';
+
+  @override
+  String get noLineChart => 'Verwenden Sie keine Liniendiagramme';
+
+  @override
+  String get noLineChartForCpu => 'Verwenden Sie keine Liniendiagramme für CPU';
+
+  @override
+  String get noPrivateKeyTip =>
+      'Der private Schlüssel existiert nicht, möglicherweise wurde er gelöscht oder es liegt ein Konfigurationsfehler vor.';
+
+  @override
+  String get noPromptAgain => 'Nicht mehr nachfragen';
+
+  @override
+  String get onServerDetailPage => 'in Detailansicht des Servers';
+
+  @override
+  String get onlyOneLine => 'Nur als eine Zeile anzeigen (scrollbar)';
+
+  @override
+  String get onlyWhenCoreBiggerThan8 =>
+      'Wirksam nur, wenn die Anzahl der Kerne > 8 ist.';
+
+  @override
+  String get openLastPath => 'Öffnen Sie den letzten Pfad';
+
+  @override
+  String get openLastPathTip =>
+      'Verschiedene Server haben unterschiedliche Einträge, und der Eintrag ist der Pfad zum Ausgang';
+
+  @override
+  String get parseContainerStatsTip =>
+      'Das Analysieren des Belegungsstatus durch Docker ist relativ langsam';
+
+  @override
+  String percentOfSize(Object percent, Object size) {
+    return '$percent% von $size';
+  }
+
+  @override
+  String get permission => 'Berechtigungen';
+
+  @override
+  String get pingInputIP => 'Bitte gib eine Ziel-IP/Domain ein.';
+
+  @override
+  String get pingNoServer =>
+      'Kein Server zum Anpingen.\nBitte füge einen Server hinzu.';
+
+  @override
+  String get plugInType => 'Einfügetyp';
+
+  @override
+  String get preferDiskAmount => 'Festplattenkapazität vorrangig anzeigen';
+
+  @override
+  String get privateKey => 'Private Key';
+
+  @override
+  String privateKeyNotFoundFmt(Object keyId) {
+    return 'Privater Schlüssel [$keyId] wurde nicht gefunden.';
+  }
+
+  @override
+  String get pushToken => 'Push Token';
+
+  @override
+  String get proxyCommandOnlySupportedOnDesktop =>
+      'ProxyCommand is only supported on desktop platforms.';
+
+  @override
+  String get pveIgnoreCertTip =>
+      'Nicht empfohlen, Achten Sie auf Sicherheitsrisiken! Wenn Sie das Standardzertifikat von PVE verwenden, müssen Sie diese Option aktivieren.';
+
+  @override
+  String get pveLoginFailed =>
+      'Anmeldung fehlgeschlagen. Kann nicht mit Benutzername/Passwort aus der Serverkonfiguration angemeldet werden, um sich über Linux PAM anzumelden.';
+
+  @override
+  String get pveServerClientMissing =>
+      'The SSH client for this server is not available.';
+
+  @override
+  String get pveAddressMissing =>
+      'The PVE address is missing. Please configure it in server settings.';
+
+  @override
+  String get pvePasswordRequired =>
+      'PVE password is required. Please set it in server settings.';
+
+  @override
+  String get pveOtpRequired =>
+      'Two-factor authentication is enabled on this PVE server. Please enter the OTP code.';
+
+  @override
+  String get pveOtpChallengeExpired =>
+      'The OTP challenge has expired. Please refresh and try again.';
+
+  @override
+  String get pveOtpCodeRequired => 'OTP code is required.';
+
+  @override
+  String get pveOtpVerificationFailed =>
+      'OTP verification failed. Please try again with a fresh code.';
+
+  @override
+  String get pveOtpTitle => 'OTP Verification';
+
+  @override
+  String get pveOtpLabel => 'OTP Code';
+
+  @override
+  String get pveInvalidResponseBody =>
+      'PVE login returned an invalid response body.';
+
+  @override
+  String get pveInvalidResponseData =>
+      'PVE login response did not contain a valid data payload.';
+
+  @override
+  String get pveMissingAuthTicket =>
+      'PVE login succeeded but no authentication ticket was returned.';
+
+  @override
+  String get pveVersionLow =>
+      'Diese Funktion befindet sich derzeit in der Testphase und wurde nur auf PVE 8+ getestet. Bitte verwenden Sie sie mit Vorsicht.';
+
+  @override
+  String get pveLoadingForwarding => 'Establishing SSH tunnel...';
+
+  @override
+  String get pveLoadingLogin => 'Authenticating with PVE...';
+
+  @override
+  String get pveLoadingData => 'Fetching cluster data...';
+
+  @override
+  String get pveLoadingConnect => 'Connecting...';
+
+  @override
+  String get pvePassword => 'PVE Password';
+
+  @override
+  String get pvePasswordHint =>
+      'Required when using key-based SSH authentication';
+
+  @override
+  String get read => 'Lesen';
+
+  @override
+  String get recentConnections => 'Kürzliche Verbindungen';
+
+  @override
+  String get reconnecting => 'Erneut verbinden...';
+
+  @override
+  String get rememberPwdInMem => 'Passwort im Speicher behalten';
+
+  @override
+  String get rememberPwdInMemTip => 'Für Container, Aufhängen usw.';
+
+  @override
+  String get rememberWindowSize => 'Fenstergröße merken';
+
+  @override
+  String get remotePath => 'Entfernte Pfade';
+
+  @override
+  String get result => 'Result';
+
+  @override
+  String get rotateAngel => 'Rotationswinkel';
+
+  @override
+  String get sameIdServerExist =>
+      'Ein Server mit derselben ID existiert bereits';
+
+  @override
+  String get save => 'Speichern';
+
+  @override
+  String get second => 's';
+
+  @override
+  String get serverDetailOrder => 'Reihenfolge der Widgets auf der Detailseite';
+
+  @override
+  String get serverFuncBtns => 'Server-Funktionsschaltflächen';
+
+  @override
+  String get serverOrder => 'Server-Bestellung';
+
+  @override
+  String get serverTabRequired => 'Server-Tab kann nicht entfernt werden';
+
+  @override
+  String get sftpDlPrepare => 'Verbindung vorbereiten...';
+
+  @override
+  String get sftpEditorTip =>
+      'Wenn leer, verwenden Sie den im App integrierten Dateieditor. Wenn ein Wert vorhanden ist, wird der Editor des Remote-Servers verwendet, z.B. `vim` (es wird empfohlen, automatisch gemäß `EDITOR` zu ermitteln).';
+
+  @override
+  String get sftpRmrDirSummary =>
+      'Verwenden Sie \"rm -r\", um das Verzeichnis in SFTP zu löschen.';
+
+  @override
+  String get sftpSSHConnected => 'SFTP Verbunden';
+
+  @override
+  String get sftp => 'SFTP';
+
+  @override
+  String get sftpShowFoldersFirst => 'Ordner zuerst anzeigen';
+
+  @override
+  String get showDistLogo => 'Distributionslogo anzeigen';
+
+  @override
+  String get size => 'Größe';
+
+  @override
+  String get softWrap => 'Weicher Umbruch';
+
+  @override
+  String get specifyDev => 'Gerät angeben';
+
+  @override
+  String get specifyDevTip =>
+      'Zum Beispiel bezieht sich die Standard-Netzwerkverkehrsstatistik auf alle Geräte. Hier können Sie ein bestimmtes Gerät angeben.';
+
+  @override
+  String get tempIsCelsiusTip =>
+      'When enabled, the temperature value will be treated as Celsius instead of millicelsius. Turn on only if the temperature displays incorrectly (e.g., showing 0.1°C instead of 58°C).';
+
+  @override
+  String get speed => 'Tempo';
+
+  @override
+  String spentTime(Object time) {
+    return 'Benötigte Zeit: $time';
+  }
+
+  @override
+  String sshConfigAllExist(Object duplicateCount) {
+    return 'Alle Server existieren bereits ($duplicateCount Duplikate gefunden)';
+  }
+
+  @override
+  String get ssh => 'SSH';
+
+  @override
+  String get sshConnectionMode => 'SSH connection mode';
+
+  @override
+  String get sshConnectionModeBuiltin => 'Built-in';
+
+  @override
+  String get sshConnectionModeSystem => 'System SSH';
+
+  @override
+  String get sshConnectionModeTip =>
+      'Built-in: use the app\'s terminal. System SSH: launch the system ssh command in an external terminal.';
+
+  @override
+  String get sshConnectionModeUseBuiltin => 'Use built-in terminal';
+
+  @override
+  String get sshConnectionModeUseSystem => 'Use system SSH';
+
+  @override
+  String sshConfigDuplicatesSkipped(Object duplicateCount) {
+    return '$duplicateCount Duplikate werden übersprungen';
+  }
+
+  @override
+  String get sshConfigFound =>
+      'Wir haben SSH-Konfiguration auf Ihrem System gefunden.';
+
+  @override
+  String sshConfigFoundServers(Object totalCount) {
+    return '$totalCount Server gefunden';
+  }
+
+  @override
+  String get sshConfigImport => 'SSH-Konfiguration importieren';
+
+  @override
+  String get sshConfigImportHelp =>
+      'Es können nur Basisinformationen importiert werden, zum Beispiel: IP/Port.';
+
+  @override
+  String get sshConfigImportPermission =>
+      'Möchten Sie die Berechtigung erteilen, ~/.ssh/config zu lesen und Server-Einstellungen automatisch zu importieren?';
+
+  @override
+  String get sshConfigImportTip =>
+      'Bei der ersten Server-Erstellung zum Lesen von ~/.ssh/config auffordern';
+
+  @override
+  String sshConfigImported(Object count) {
+    return '$count Server aus SSH-Konfiguration importiert';
+  }
+
+  @override
+  String sshHostKeyChangedDesc(Object serverName) {
+    return 'Der SSH-Hostschlüssel für $serverName hat sich geändert. Fahren Sie nur fort, wenn Sie diesem Server vertrauen.';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Base64(Object fingerprint) {
+    return 'Fingerabdruck (MD5 Base64): $fingerprint';
+  }
+
+  @override
+  String sshHostKeyFingerprintMd5Hex(Object fingerprint) {
+    return 'Fingerabdruck (MD5 Hex): $fingerprint';
+  }
+
+  @override
+  String get sshHostKeyType => 'SSH-Hostschlüsseltyp';
+
+  @override
+  String sshHostKeyNewDesc(Object serverName) {
+    return 'Ein neuer SSH-Hostschlüssel wurde von $serverName empfangen. Prüfen Sie den Fingerabdruck, bevor Sie vertrauen.';
+  }
+
+  @override
+  String sshHostKeyStoredFingerprint(Object fingerprint) {
+    return 'Gespeicherter Fingerabdruck: $fingerprint';
+  }
+
+  @override
+  String get sshConfigManualSelect =>
+      'Möchten Sie die SSH-Konfigurationsdatei manuell auswählen?';
+
+  @override
+  String get sshConfigNoServers =>
+      'Keine Server in der SSH-Konfiguration gefunden';
+
+  @override
+  String get sshConfigPermissionDenied =>
+      'Aufgrund der macOS-Berechtigungen kann nicht auf die SSH-Konfigurationsdatei zugegriffen werden.';
+
+  @override
+  String sshConfigServersToImport(Object importCount) {
+    return '$importCount Server werden importiert';
+  }
+
+  @override
+  String get sshTermHelp =>
+      'Wenn das Terminal scrollbar ist, kann durch horizontales Ziehen Text ausgewählt werden. Durch Klicken auf die Tastentaste wird die Tastatur ein- oder ausgeschaltet. Das Dateisymbol öffnet den aktuellen Pfad SFTP. Die Zwischenablage-Schaltfläche kopiert den Inhalt, wenn Text ausgewählt ist, und fügt Inhalte aus der Zwischenablage in das Terminal ein, wenn kein Text ausgewählt ist und Inhalte in der Zwischenablage vorhanden sind. Das Codesymbol fügt Code-Schnipsel ins Terminal ein und führt sie aus.';
+
+  @override
+  String sshTip(Object url) {
+    return 'Diese Funktion befindet sich jetzt in der Experimentierphase.\n\nBitte melde Bugs auf $url oder mach mit bei der Entwicklung.';
+  }
+
+  @override
+  String get sshVirtualKeyAutoOff =>
+      'Automatische Umschaltung der virtuellen Tasten';
+
+  @override
+  String get stat => 'Statistik';
+
+  @override
+  String get supportFmtArgs =>
+      'Die folgenden Formatierungsparameter werden unterstützt:';
+
+  @override
+  String get suspendTip =>
+      'Die Suspend-Funktion erfordert Root-Rechte und systemd-Unterstützung.';
+
+  @override
+  String switchTo(Object val) {
+    return 'Wechseln zu $val';
+  }
+
+  @override
+  String get syncAppSettings => 'Sync app settings';
+
+  @override
+  String get syncAppSettingsTip =>
+      'Include theme, layout, editor, terminal and other device preferences in automatic sync.';
+
+  @override
+  String get syncTip =>
+      'Damit einige Änderungen wirksam werden, kann ein Neustart erforderlich sein.';
+
+  @override
+  String get system => 'Systeme';
+
+  @override
+  String get tag => 'Tags';
+
+  @override
+  String get tapToStartDiscovery =>
+      'Tippen Sie auf die Suche-Schaltfläche, um SSH-Server in Ihrem Netzwerk zu entdecken';
+
+  @override
+  String get termFontSizeTip =>
+      'Diese Einstellung beeinflusst die Größe des Terminals (Breite und Höhe). Sie können die Terminalseite zoomen, um die Schriftgröße der aktuellen Sitzung anzupassen.';
+
+  @override
+  String get textScaler => 'Skalierung der Schriftart';
+
+  @override
+  String get textScalerTip =>
+      '1.0 => 100% (Originalgröße), funktioniert nur auf der Serverseite Teil der Schrift, nicht empfohlen zu ändern.';
+
+  @override
+  String get time => 'Zeit';
+
+  @override
+  String get times => 'x';
+
+  @override
+  String get trySudo => 'Versuche es mit sudo';
+
+  @override
+  String get sudoPromptNotFound =>
+      'Aktuell wird kein sudo-Passwort-Prompt angezeigt.';
+
+  @override
+  String get unknown => 'Unbekannt';
+
+  @override
+  String get unkownConvertMode => 'Unbekannter Konvertierungsmodus';
+
+  @override
+  String get update => 'Update';
+
+  @override
+  String get updateIntervalEqual0 =>
+      'Wenn du den Wert 0 einstellst, wird nicht automatisch aktualisiert.\nDer CPU-Status kann nicht berechnet werden.';
+
+  @override
+  String get updateServerStatusInterval =>
+      'Aktualisierungsintervall des Serverstatus';
+
+  @override
+  String get upsideDown => 'Upside Down';
+
+  @override
+  String get useCdn => 'Verwenden von CDN';
+
+  @override
+  String get useCdnTip =>
+      'Nicht-chinesischen Benutzern wird die Verwendung eines CDN empfohlen. Möchten Sie es verwenden?';
+
+  @override
+  String get useNoPwd => 'Es wird kein Passwort verwendet';
+
+  @override
+  String get usePodmanByDefault => 'Standardmäßige Verwendung von Podman';
+
+  @override
+  String get used => 'Gebraucht';
+
+  @override
+  String get view => 'Ansicht';
+
+  @override
+  String get viewDetails => 'Details anzeigen';
+
+  @override
+  String get viewErr => 'Fehler anzeigen';
+
+  @override
+  String get virtKeyHelpClipboard =>
+      'In die Zwischenablage kopieren, wenn das ausgewählte Terminal nicht leer ist, andernfalls den Inhalt der Zwischenablage in das Terminal einfügen.';
+
+  @override
+  String get virtKeyHelpIME => 'Tastatur ein-/ausschalten';
+
+  @override
+  String get virtKeyHelpSFTP => 'Aktuelles Verzeichnis in SFTP öffnen.';
+
+  @override
+  String get waitConnection =>
+      'Bitte warte, bis die Verbindung hergestellt wurde.';
+
+  @override
+  String get wakeLock => 'Wach halten';
+
+  @override
+  String get watchNotPaired => 'Keine gekoppelte Apple Watch';
+
+  @override
+  String get webdavSettingEmpty => 'Webdav-Einstellungen sind leer';
+
+  @override
+  String get whenOpenApp => 'Beim Öffnen der App';
+
+  @override
+  String get wiki => 'Wiki';
+
+  @override
+  String get wolTip =>
+      'Nach der Konfiguration von WOL (Wake-on-LAN) wird jedes Mal, wenn der Server verbunden wird, eine WOL-Anfrage gesendet.';
+
+  @override
+  String get write => 'Schreiben';
+
+  @override
+  String get writeScriptFailTip =>
+      'Das Schreiben des Skripts ist fehlgeschlagen, möglicherweise aufgrund fehlender Berechtigungen oder das Verzeichnis existiert nicht.';
+
+  @override
+  String get writeScriptTip =>
+      'Nach der Verbindung mit dem Server wird ein Skript in `~/.config/server_box` \n | `/tmp/server_box` geschrieben, um den Systemstatus zu überwachen. Sie können den Skriptinhalt überprüfen.';
+
+  @override
+  String get menuGitHubRepository => 'GitHub Repository';
+
+  @override
+  String get podmanDockerEmulationDetected =>
+      'Podman Docker-Emulation erkannt. Bitte wechseln Sie in den Einstellungen zu Podman.';
+
+  @override
+  String get portForwardBeta =>
+      'This feature is still in beta testing. Functionality is not guaranteed.';
+
+  @override
+  String get portForward_startPrompt =>
+      'Add a port forward rule to get started';
+
+  @override
+  String get portForward_localHost => 'Local Host';
+
+  @override
+  String get portForward_localPort => 'Local Port';
+
+  @override
+  String get portForward_remoteHost => 'Remote Host';
+
+  @override
+  String get portForward_remotePort => 'Remote Port';
+
+  @override
+  String get portForward_type_local => 'Local';
+
+  @override
+  String get portForward_type_remote => 'Remote';
+
+  @override
+  String portForward_deleteConfirmFmt(Object name) {
+    return 'Delete $name?';
+  }
+
+  @override
+  String get sponsor => 'Sponsor';
+
+  @override
+  String get sort => 'Sort';
+
+  @override
+  String get sortByName => 'By name';
+
+  @override
+  String get sortByJoinTime => 'By join time';
+
+  @override
+  String get ascending => 'Ascending';
+
+  @override
+  String get descending => 'Descending';
+
+  @override
+  String get searchServer => 'Search server';
+
+  @override
+  String get serverHistory => 'Server history';
+
+  @override
+  String get clearHistory => 'Clear history';
+
+  @override
+  String get portForwardBetaTitle => 'Port Forwarding (Beta)';
+
+  @override
+  String get systemd => 'Systemd';
+}

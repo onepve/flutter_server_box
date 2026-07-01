@@ -1,0 +1,54 @@
+import 'package:fl_lib/fl_lib.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+
+enum SSHErrType {
+  unknown,
+  connect,
+  auth,
+  noPrivateKey,
+  segments,
+  writeScript,
+  getStatus,
+}
+
+class SSHErr extends Err<SSHErrType> {
+  const SSHErr({required super.type, super.message});
+
+  @override
+  String? get solution => switch (type) {
+    SSHErrType.auth => l10n.authFailTip,
+    SSHErrType.writeScript => l10n.writeScriptFailTip,
+    SSHErrType.noPrivateKey => l10n.noPrivateKeyTip,
+    _ => null,
+  };
+}
+
+enum ContainerErrType {
+  unknown,
+  noClient,
+  notInstalled,
+  invalidVersion,
+  segmentsNotMatch,
+  parsePs,
+  parseImages,
+  parseStats,
+  podmanDetected,
+  sudoPasswordRequired,
+  sudoPasswordIncorrect,
+}
+
+class ContainerErr extends Err<ContainerErrType> {
+  const ContainerErr({required super.type, super.message});
+
+  @override
+  String? get solution => null;
+}
+
+enum PveErrType { unknown, net, loginFailed, needTfa, invalidResponse }
+
+class PveErr extends Err<PveErrType> {
+  const PveErr({required super.type, super.message});
+
+  @override
+  String? get solution => null;
+}

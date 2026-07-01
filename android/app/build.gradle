@@ -1,0 +1,163 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+} else {
+    System.err.printf(" [!] key.properties not found in %s (%s). \n", rootProject, rootProject.file('.'))
+}
+
+def releaseStoreFilePath = keystoreProperties['storeFile']?.toString()?.trim()
+def releaseStorePassword = keystoreProperties['storePassword']?.toString()?.trim()
+def releaseKeyAlias = keystoreProperties['keyAlias']?.toString()?.trim()
+def releaseKeyPassword = keystoreProperties['keyPassword']?.toString()?.trim()
+
+def hasReleaseSigning =
+    releaseStoreFilePath &&
+    file(releaseStoreFilePath).exists() &&
+    releaseStorePassword &&
+    releaseKeyAlias &&
+    releaseKeyPassword
+
+def allowDebugReleaseSigning = project.findProperty('allowDebugReleaseSigning') == 'true'
+def requestedTaskNames = gradle.startParameter.taskNames
+    .findAll {
+        !it.contains(':') ||
+        (it.startsWith(':') && it.indexOf(':', 1) == -1) ||
+        it.startsWith("${project.path}:") ||
+        it.startsWith(":${project.name}:")
+    }
+    .collect {
+        def normalizedTaskName =
+            (it.startsWith("${project.path}:") || it.startsWith(":${project.name}:"))
+                ? it.substring(it.lastIndexOf(':') + 1)
+                : it.startsWith(':') ? it.substring(1) : it
+        normalizedTaskName.toLowerCase()
+    }
+def aggregateSigningTasks = ['assemble', 'build', 'bundle', 'install']
+def requiresReleaseSigning = requestedTaskNames.any {
+    aggregateSigningTasks.contains(it) ||
+    it == 'release' ||
+    (it.startsWith('assemble') && it.contains('release')) ||
+    (it.startsWith('bundle') && it.contains('release')) ||
+    (it.startsWith('install') && it.contains('release')) ||
+    (it.startsWith('build') && it.contains('release'))
+}
+
+if (requiresReleaseSigning && !hasReleaseSigning) {
+    if (allowDebugReleaseSigning) {
+        System.err.printf(" [!] Release signing is unavailable. Falling back to debug signing because -PallowDebugReleaseSigning=true was provided. \n")
+    } else {
+        throw new GradleException(
+            'Release signing is not configured. Add key.properties with a valid storeFile, ' +
+            'or build with -PallowDebugReleaseSigning=true for local verification only.'
+        )
+    }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+android {
+    namespace "tech.lolli.toolbox"
+    compileSdk flutter.compileSdkVersion
+    ndkVersion flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId "tech.lolli.toolbox"
+        // You can update the following values to match your application needs.
+        // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
+        minSdkVersion flutter.minSdkVersion
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        
+        ndk {
+            if(!splits.abi.enable) { // abiFilters cannot be present when splits abi filters are set
+                abiFilters 'arm64-v8a', 'armeabi-v7a'
+            }
+        }
+    }
+
+    signingConfigs {
+        release {
+            keyAlias releaseKeyAlias
+            keyPassword releaseKeyPassword
+            storeFile releaseStoreFilePath ? file(releaseStoreFilePath) : null
+            storePassword releaseStorePassword
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            // No applicationIdSuffix or resValue here
+        }
+
+        profile {
+            // No applicationIdSuffix or resValue here
+        }
+    }
+
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {}
+
+ext.abiCodes = ["x86_64": 1, "armeabi-v7a": 2, "arm64-v8a": 3]
+import com.android.build.OutputFile
+android.applicationVariants.all { variant ->
+  variant.outputs.each { output ->
+    def abiVersionCode = project.ext.abiCodes.get(output.getFilter(OutputFile.ABI))
+    if (abiVersionCode != null) {
+      output.versionCodeOverride = variant.versionCode * 100 + abiVersionCode
+    }
+  }
+}

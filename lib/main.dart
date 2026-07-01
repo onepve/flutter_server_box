@@ -1,0 +1,122 @@
+import 'dart:async';
+
+import 'package:computer/computer.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:logging/logging.dart';
+import 'package:server_box/app.dart';
+import 'package:server_box/data/model/app/menu/server_func.dart';
+import 'package:server_box/data/model/app/server_detail_card.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/ssh/session_manager.dart';
+import 'package:server_box/data/store/server.dart';
+import 'package:server_box/hive/hive_registrar.g.dart';
+
+Future<void> main() async {
+  await _runInZone(() async {
+    await _initApp();
+    runApp(ProviderScope(child: const MyApp()));
+  });
+}
+
+Future<void> _runInZone(Future<void> Function() body) async {
+  final zoneSpec = ZoneSpecification(
+    print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
+      parent.print(zone, line);
+    },
+  );
+
+  await runZonedGuarded(
+    body,
+    (e, s) => Loggers.app.warning('Zone error', e, s),
+    zoneSpecification: zoneSpec,
+  );
+}
+
+Future<void> _initApp() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await _initData();
+  _setupDebug();
+  await _initWindow();
+
+  await _doPlatformRelated();
+
+  // Initialize Android session notification channel/handler
+  TermSessionManager.init();
+}
+
+Future<void> _initData() async {
+  await Paths.init(BuildData.name, bakName: 'srvbox_bak.json');
+
+  await Hive.initFlutter();
+  Hive.registerAdapters();
+
+  await PrefStore.shared.init(); // Call this before accessing any store
+  await Stores.init();
+
+  // It may effect the following logic, so await it.
+  // DO DB migration before load any provider.
+  await _doDbMigrate();
+
+  if (Stores.setting.betaTest.fetch()) AppUpdate.chan = AppUpdateChan.beta;
+
+  FontUtils.loadFrom(Stores.setting.fontPath.fetch());
+}
+
+void _setupDebug() {
+  Logger.root.level = Level.WARNING;
+  Logger.root.onRecord.listen((record) {
+    DebugProvider.addLog(record);
+  });
+}
+
+Future<void> _doPlatformRelated() async {
+  if (isAndroid) {
+    // try switch to highest refresh rate
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (e, s) {
+      Loggers.app.warning('Failed to set high refresh rate', e, s);
+    }
+  }
+
+  final serversCount = Stores.server.keys().length;
+  await Computer.shared.turnOn(
+    workersCount: (serversCount / 3).round() + 1,
+  ); // Plus 1 to avoid 0.
+}
+
+// It may contains some async heavy funcs.
+Future<void> _doDbMigrate() async {
+  final lastVer = Stores.setting.lastVer.fetch();
+  const newVer = BuildData.build;
+  // It's only the version upgrade trigger logic.
+  // How to upgrade the data is inside each own func.
+  if (lastVer < newVer) {
+    ServerDetailCards.autoAddNewCards(newVer);
+    ServerFuncBtn.autoAddNewFuncs(newVer);
+    Stores.setting.lastVer.put(newVer);
+  }
+
+  // Migrate the old id to new id.
+  ServerStore.instance.migrateIds();
+}
+
+Future<void> _initWindow() async {
+  if (!isDesktop) return;
+  final windowStateProp = Stores.setting.windowState;
+  final windowState = windowStateProp.fetch();
+  final hideTitleBar = Stores.setting.hideTitleBar.fetch();
+  WindowFrameConfig.setShowCaption(hideTitleBar);
+  await SystemUIs.initDesktopWindow(
+    hideTitleBar: hideTitleBar,
+    size: windowState?.size ?? Size(947, 487),
+    position: windowState?.position,
+    listener: WindowStateListener(windowStateProp),
+  );
+}

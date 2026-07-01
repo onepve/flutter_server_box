@@ -1,0 +1,252 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:fl_lib/fl_lib.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_highlight/theme_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:icons_plus/icons_plus.dart';
+import 'package:server_box/core/extension/context/locale.dart';
+import 'package:server_box/core/utils/server_dedup.dart';
+import 'package:server_box/core/utils/ssh_config.dart';
+import 'package:server_box/data/model/app/net_view.dart';
+import 'package:server_box/data/model/server/discovery_result.dart';
+import 'package:server_box/data/model/server/server_private_info.dart';
+import 'package:server_box/data/provider/server/all.dart';
+import 'package:server_box/data/res/build_data.dart';
+import 'package:server_box/data/res/github_id.dart';
+import 'package:server_box/data/res/store.dart';
+import 'package:server_box/data/res/url.dart';
+import 'package:server_box/data/store/setting.dart';
+import 'package:server_box/generated/l10n/l10n.dart';
+import 'package:server_box/sync/custom_update.dart';
+import 'package:server_box/view/page/backup.dart';
+import 'package:server_box/view/page/private_key/list.dart';
+import 'package:server_box/view/page/server/connection_stats.dart';
+import 'package:server_box/view/page/server/discovery/discovery.dart';
+import 'package:server_box/view/page/setting/entries/home_tabs.dart';
+import 'package:server_box/view/page/setting/platform/ios.dart';
+import 'package:server_box/view/page/setting/platform/platform_pub.dart';
+import 'package:server_box/view/page/setting/seq/srv_detail_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_func_seq.dart';
+import 'package:server_box/view/page/setting/seq/srv_seq.dart';
+import 'package:server_box/view/page/setting/seq/virt_key.dart';
+
+part 'about.dart';
+part 'entries/ai.dart';
+part 'entries/app.dart';
+part 'entries/container.dart';
+part 'entries/editor.dart';
+part 'entries/full_screen.dart';
+part 'entries/server.dart';
+part 'entries/sftp.dart';
+part 'entries/ssh.dart';
+
+const _kIconSize = 23.0;
+
+class SettingsPage extends ConsumerStatefulWidget {
+  const SettingsPage({super.key});
+
+  static const route = AppRouteNoArg(page: SettingsPage.new, path: '/settings');
+
+  @override
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage>
+    with SingleTickerProviderStateMixin {
+  late final _tabCtrl = TabController(
+    length: SettingsTabs.values.length,
+    vsync: this,
+  );
+
+  void _clearAllSettings() {
+    final keys = SettingStore.instance.box.keys;
+    SettingStore.instance.box.deleteAll(keys);
+    context.showSnackBar(libL10n.success);
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: Text(libL10n.setting, style: const TextStyle(fontSize: 20)),
+        bottom: TabBar(
+          controller: _tabCtrl,
+          dividerHeight: 0,
+          tabAlignment: TabAlignment.center,
+          isScrollable: true,
+          tabs: SettingsTabs.values
+              .map((e) => Tab(text: e.i18n))
+              .toList(growable: false),
+        ),
+        actions: [
+          Btn.text(
+            text: context.libL10n.logs,
+            onTap: () => DebugPage.route.go(
+              context,
+              args: DebugPageArgs(
+                title: '${context.libL10n.logs}(${BuildData.build})',
+              ),
+            ),
+          ),
+          Btn.icon(
+            icon: const Icon(Icons.delete),
+            onTap: () => context.showRoundDialog(
+              title: libL10n.attention,
+              child: SimpleMarkdown(
+                data: libL10n.askContinue(
+                  '${libL10n.delete} **${libL10n.all}** ${libL10n.setting}',
+                ),
+              ),
+              actions: [
+                CountDownBtn(
+                  onTap: () {
+                    context.pop();
+                    _clearAllSettings();
+                  },
+                  afterColor: Colors.red,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: TabBarView(controller: _tabCtrl, children: SettingsTabs.pages),
+      ),
+    );
+  }
+}
+
+final class AppSettingsPage extends ConsumerStatefulWidget {
+  const AppSettingsPage({super.key});
+
+  @override
+  ConsumerState<AppSettingsPage> createState() => _AppSettingsPageState();
+}
+
+final class _AppSettingsPageState extends ConsumerState<AppSettingsPage> {
+  final _setting = Stores.setting;
+
+  late final _sshOpacityCtrl = TextEditingController(
+    text: _setting.sshBgOpacity.fetch().toString(),
+  );
+  late final _sshBlurCtrl = TextEditingController(
+    text: _setting.sshBlurRadius.fetch().toString(),
+  );
+  late final _textScalerCtrl = TextEditingController(
+    text: _setting.textFactor.toString(),
+  );
+  late final _serverLogoCtrl = TextEditingController(
+    text: _setting.serverLogoUrl.fetch(),
+  );
+
+  @override
+  void dispose() {
+    _sshOpacityCtrl.dispose();
+    _sshBlurCtrl.dispose();
+    _textScalerCtrl.dispose();
+    _serverLogoCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiList(
+      children: [
+        [
+          CenterGreyTitle(libL10n.app),
+          _buildApp(),
+          CenterGreyTitle(l10n.ai),
+          _buildAskAiConfig(),
+        ],
+        [CenterGreyTitle(libL10n.server), _buildServer()],
+        [
+          CenterGreyTitle(l10n.ssh),
+          _buildSSH(),
+          CenterGreyTitle(l10n.sftp),
+          _buildSFTP(),
+        ],
+        [
+          CenterGreyTitle(libL10n.container),
+          _buildContainer(),
+          CenterGreyTitle(libL10n.editor),
+          _buildEditor(),
+        ],
+
+        /// Fullscreen Mode is designed for old mobile phone which can be
+        /// used as a status screen.
+        if (isMobile) [CenterGreyTitle(l10n.fullScreen), _buildFullScreen()],
+      ],
+    );
+  }
+
+  Future<void> showTextSettingDialog({
+    required String title,
+    required String initialValue,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required ValueChanged<String> onSave,
+    bool suggestion = false,
+  }) {
+    return Future<void>.sync(
+      () => withTextFieldController((ctrl) async {
+        ctrl.text = initialValue;
+
+        void save() {
+          onSave(ctrl.text.trim());
+          context.pop();
+        }
+
+        await context.showRoundDialog<bool>(
+          title: title,
+          child: Input(
+            controller: ctrl,
+            autoFocus: true,
+            label: label,
+            hint: hint,
+            icon: icon,
+            suggestion: suggestion,
+            onSubmitted: (_) => save(),
+          ),
+          actions: Btn.ok(onTap: save).toList,
+        );
+      }),
+    );
+  }
+}
+
+enum SettingsTabs {
+  app,
+  privateKey,
+  backup,
+  about;
+
+  String get i18n => switch (this) {
+    SettingsTabs.app => libL10n.app,
+    SettingsTabs.privateKey => l10n.privateKey,
+    SettingsTabs.backup => libL10n.backup,
+    SettingsTabs.about => libL10n.about,
+  };
+
+  Widget get page => switch (this) {
+    SettingsTabs.app => const AppSettingsPage(),
+    SettingsTabs.privateKey => const PrivateKeysListPage(),
+    SettingsTabs.backup => const BackupPage(),
+    SettingsTabs.about => const _AppAboutPage(),
+  };
+
+  static final List<Widget> pages = SettingsTabs.values
+      .map((e) => e.page)
+      .toList();
+}

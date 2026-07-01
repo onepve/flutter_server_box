@@ -1,0 +1,182 @@
+name: CBox Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: CBox
+  BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  buildAndroid:
+    name: 编译 Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: "3.44.1"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "21"
+      - name: 获取签名密钥
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "${KEYSTORE_BASE64}" | base64 -d > android/app/cbox-release.keystore
+          cat > android/key.properties << EOF
+          storeFile=cbox-release.keystore
+          storePassword=${KEYSTORE_PASSWORD}
+          keyAlias=${KEY_ALIAS}
+          keyPassword=${KEY_PASSWORD}
+          EOF
+          echo "Keystore + key.properties ready"
+      - name: 修补 JNI build-id
+        run: |
+          flutter pub get
+          scripts/release/patch-jni-build-id.sh
+      - name: 正式编译
+        shell: bash
+        run: dart run fl_build -bp -p android
+      - name: 重命名 APK
+        shell: bash
+        run: |
+          cd build/app/outputs/flutter-apk
+          for f in *_${BUILD_NUMBER}_*.apk; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
+          rm -f app-*-release.apk
+      - name: 上传 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-v1.0.${{ env.BUILD_NUMBER }}-android
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 90
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm64.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_arm.apk
+            build/app/outputs/flutter-apk/${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_amd64.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  buildLinux:
+    name: 编译 Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runs_on: ubuntu-latest
+            release_suffix: ""
+            artifact_suffix: ""
+          - runs_on: ubuntu-22.04
+            release_suffix: "_legacy"
+            artifact_suffix: "-legacy"
+    runs-on: ${{ matrix.runs_on }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: "3.44.1"
+      - name: 安装依赖
+        run: |
+          sudo apt update
+          sudo apt install -y clang cmake ninja-build pkg-config libgtk-3-dev mesa-utils libvulkan-dev desktop-file-utils wget
+          sudo apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libunwind-dev libsecret-1-dev
+      - name: 正式编译
+        shell: bash
+        run: dart run fl_build -bp -p linux
+      - name: 重命名
+        shell: bash
+        run: |
+          for f in *_${BUILD_NUMBER}_*.AppImage; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
+      - name: 添加旧版后缀
+        if: matrix.release_suffix != ''
+        shell: bash
+        run: |
+          mv "${APP_NAME}_v1.0.${BUILD_NUMBER}_amd64.AppImage" "${APP_NAME}_v1.0.${BUILD_NUMBER}${{ matrix.release_suffix }}_amd64.AppImage"
+      - name: 上传 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-v1.0.${{ env.BUILD_NUMBER }}-linux${{ matrix.artifact_suffix }}
+          path: "*.AppImage"
+          if-no-files-found: error
+          retention-days: 90
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}${{ matrix.release_suffix }}_amd64.AppImage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  buildWindows:
+    name: 编译 Windows
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+          fetch-depth: 0
+      - name: 安装 Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: "3.44.1"
+      - name: 正式编译
+        shell: bash
+        run: dart run fl_build -bp -p windows
+      - name: 重命名
+        shell: bash
+        run: |
+          for f in *_${BUILD_NUMBER}_*.zip; do
+            mv "$f" "${f/_${BUILD_NUMBER}_/_v1.0.${BUILD_NUMBER}_}"
+          done
+      - name: 上传 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-v1.0.${{ env.BUILD_NUMBER }}-windows
+          path: "*_windows_amd64.zip"
+          if-no-files-found: error
+          retention-days: 90
+      - name: 创建 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ env.BUILD_NUMBER }}
+          files: |
+            ${{ env.APP_NAME }}_v1.0.${{ env.BUILD_NUMBER }}_windows_amd64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
