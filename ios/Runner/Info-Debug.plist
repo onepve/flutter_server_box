@@ -18,7 +18,7 @@
 			<string>zh</string>
 		</array>
 		<key>CFBundleName</key>
-		<string>ServerBox</string>
+		<string>CBox</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
