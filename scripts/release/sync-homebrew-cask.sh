@@ -3,12 +3,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-APP_NAME="${APP_NAME:-Server Box}"
-CASK_NAME="${CASK_NAME:-server-box}"
+APP_NAME="${APP_NAME:-CBox}"
+CASK_NAME="${CASK_NAME:-cbox}"
 CASK_SUBDIR="${CASK_SUBDIR:-${CASK_NAME:0:1}}"
-CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-ServerBox}"
+CASK_DISPLAY_NAME="${CASK_DISPLAY_NAME:-CBox}"
 CASK_DESC="${CASK_DESC:-App for monitoring server status with SSH terminal, SFTP, Container management}"
-APP_REPO_SLUG="${APP_REPO_SLUG:-lollipopkit/flutter_server_box}"
+APP_REPO_SLUG="${APP_REPO_SLUG:-onepve/flutter_server_box}"
 TAP_REPO_PATH="${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}"
 TAP_CASK_PATH="${TAP_CASK_PATH:-}"
 EXPLICIT_TAP_CASK_PATH="${TAP_CASK_PATH:-}"
@@ -35,7 +35,7 @@ else
 fi
 
 if [[ -n "$APP_VERSION" && "$APP_VERSION" != '$('* ]]; then
-  DMG_BASENAME="${DMG_BASENAME:-ServerBox-${APP_VERSION}}"
+  DMG_BASENAME="${DMG_BASENAME:-CBox-${APP_VERSION}}"
 fi
 
 if [[ -z "${DMG_PATH:-}" ]]; then
@@ -55,21 +55,21 @@ fi
 
 if [[ -z "$APP_VERSION" || "$APP_VERSION" == '$('* ]]; then
   dmg_filename="$(basename "$DMG_PATH")"
-  if [[ "$dmg_filename" =~ ^ServerBox-([0-9]+(\.[0-9]+){1,2})\.dmg$ ]]; then
+  if [[ "$dmg_filename" =~ ^CBox-([0-9]+(\.[0-9]+){1,2})\.dmg$ ]]; then
     APP_VERSION="${BASH_REMATCH[1]}"
     APP_BUILD="${APP_BUILD:-}"
-  elif [[ "$dmg_filename" =~ ^ServerBox-([0-9]+(\.[0-9]+){1,2})-([0-9]+)\.dmg$ ]]; then
+  elif [[ "$dmg_filename" =~ ^CBox-([0-9]+(\.[0-9]+){1,2})-([0-9]+)\.dmg$ ]]; then
     APP_VERSION="${BASH_REMATCH[1]}"
     APP_BUILD="${BASH_REMATCH[3]}"
   else
     echo "unable to determine version from $DMG_PATH" >&2
-    echo "Provide XCARCHIVE_PATH, APP_PATH, or a DMG named ServerBox-<version>.dmg." >&2
+    echo "Provide XCARCHIVE_PATH, APP_PATH, or a DMG named CBox-<version>.dmg." >&2
     exit 1
   fi
 fi
 
 RELEASE_TAG="${RELEASE_TAG:-v${APP_VERSION}}"
-DMG_BASENAME="${DMG_BASENAME:-ServerBox-${APP_VERSION}}"
+DMG_BASENAME="${DMG_BASENAME:-CBox-${APP_VERSION}}"
 
 if [[ -z "$TAP_CASK_PATH" && -n "$TAP_REPO_PATH" ]]; then
   TAP_CASK_PATH="$TAP_REPO_PATH/Casks/${CASK_SUBDIR}/${CASK_NAME}.rb"

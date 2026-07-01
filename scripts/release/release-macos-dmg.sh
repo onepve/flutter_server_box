@@ -3,8 +3,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-if [[ -n "${SERVERBOX_RELEASE_ENV_FILE:-}" ]]; then
-  ENV_FILE="$SERVERBOX_RELEASE_ENV_FILE"
+if [[ -n "${CBOX_RELEASE_ENV_FILE:-}" ]]; then
+  ENV_FILE="$CBOX_RELEASE_ENV_FILE"
 elif [[ -f "$REPO_ROOT/.env.release" ]]; then
   ENV_FILE="$REPO_ROOT/.env.release"
 elif [[ -f "$REPO_ROOT/.env" ]]; then
@@ -18,7 +18,7 @@ if [[ -n "$ENV_FILE" && -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$ENV_FILE"
   set +a
-elif [[ "${SERVERBOX_RELEASE_ENV_FILE:-}" != "" ]]; then
+elif [[ "${CBOX_RELEASE_ENV_FILE:-}" != "" ]]; then
   echo "release environment file not found: $ENV_FILE" >&2
   exit 1
 fi
@@ -243,12 +243,11 @@ require_file /usr/libexec/PlistBuddy
 WORKSPACE_PATH="${WORKSPACE_PATH:-$REPO_ROOT/macos/Runner.xcworkspace}"
 SCHEME="${SCHEME:-Runner}"
 CONFIGURATION="${CONFIGURATION:-Release}"
-APP_NAME="${APP_NAME:-Server Box}"
-APP_ASSET_NAME="${APP_ASSET_NAME:-ServerBox}"
-APP_BUNDLE_ID="${APP_BUNDLE_ID:-com.lollipopkit.toolbox}"
-VOLUME_NAME="${VOLUME_NAME:-ServerBox}"
-SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application}"
-APP_PROFILE_NAME="${APP_PROFILE_NAME:-ServerBox DMG Profile}"
+APP_NAME="${APP_NAME:-CBox}"
+APP_ASSET_NAME="${APP_ASSET_NAME:-CBox}"
+APP_BUNDLE_ID="${APP_BUNDLE_ID:-com.onepve.serverbox}"
+VOLUME_NAME="${VOLUME_NAME:-CBox}"
+APP_PROFILE_NAME="${APP_PROFILE_NAME:-CBox DMG Profile}"
 BUILD_ROOT="${BUILD_ROOT:-$REPO_ROOT/build/release}"
 ARCHIVE_PATH="${ARCHIVE_PATH:-$BUILD_ROOT/${APP_ASSET_NAME}.xcarchive}"
 EXPORT_PATH="${EXPORT_PATH:-$BUILD_ROOT/export/${APP_ASSET_NAME}}"
@@ -416,5 +415,5 @@ if [[ "$PUBLISH_GITHUB_RELEASE" == "1" ]]; then
   echo "GitHub release: $APP_REPO_SLUG $RELEASE_TAG"
 fi
 if [[ "${SYNC_HOMEBREW_CASK:-1}" == "1" ]]; then
-  echo "Homebrew cask: ${TAP_CASK_PATH:-${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}/Casks/s/server-box.rb}"
+  echo "Homebrew cask: ${TAP_CASK_PATH:-${TAP_REPO_PATH:-$HOME/proj/homebrew-cask}/Casks/c/cbox.rb}"
 fi
