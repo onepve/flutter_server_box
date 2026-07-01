@@ -12,7 +12,7 @@ import AppIntents
 import Foundation
 
 let demoStatus = Status(name: "Server", cpu: "31.7%", mem: "1.3g / 1.9g", disk: "7.1g / 30.0g", net: "712.3k / 1.2m")
-let domain = "com.onepve.serverbox"
+let domain = "com.lollipopkit.toolbox"
 let bgColor = DynamicColor(dark: UIColor.black, light: UIColor.white)
 
 // Widget-specific constants
@@ -44,7 +44,7 @@ enum WidgetConstants {
         static let critical = Color(.systemRed)
         static let accent = Color(.systemBlue)
     }
-    static let appGroupId = "group.com.onepve.serverbox"
+    static let appGroupId = "group.com.lollipopkit.toolbox"
 }
 
 // Performance optimization: cache parsed values

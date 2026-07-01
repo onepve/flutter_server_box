@@ -1,4 +1,4 @@
-display_name: CBox
+display_name: ServerBox
 package_name: cn.lpkt.serverbox
 maintainer:
   name: lollipopkit
@@ -23,7 +23,7 @@ keywords:
   - sftp
   - system
 
-generic_name: CBox
+generic_name: ServerBox
 
 categories:
   - Utility

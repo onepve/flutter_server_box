@@ -47,7 +47,7 @@ class PhoneConnMgr: NSObject, WCSessionDelegate, ObservableObject {
                 let list = urls.filter { !$0.isEmpty }
                 self.urls = list
                 // Save URLs to App Group for widget access
-                let appGroupId = "group.com.onepve.serverbox"
+                let appGroupId = "group.com.lollipopkit.toolbox"
                 if let defaults = UserDefaults(suiteName: appGroupId) {
                     defaults.set(list, forKey: "watch_shared_urls")
                 }

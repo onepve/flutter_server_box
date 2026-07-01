@@ -20,7 +20,7 @@
 		<key>NSSupportsLiveActivities</key>
 		<true/>
 		<key>CFBundleName</key>
-		<string>CBox</string>
+		<string>ServerBox</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>

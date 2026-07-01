@@ -71,7 +71,7 @@ class SettingStore extends HiveStore {
   late final termFontSize = propertyDefault('termFontSize', 13.0);
 
   // Locale
-  late final locale = propertyDefault('locale', 'zh');
+  late final locale = propertyDefault('locale', '');
 
   // SSH virtual key (ctrl | alt) auto turn off
   late final sshVirtualKeyAutoOff = propertyDefault(
@@ -195,7 +195,7 @@ class SettingStore extends HiveStore {
   late final keepStatusWhenErr = propertyDefault('keepStatusWhenErr', false);
 
   /// Parse container stat
-  late final containerParseStat = propertyDefault('containerParseStat', false);
+  late final containerParseStat = propertyDefault('containerParseStat', true);
 
   /// Auto refresh container status
   late final containerAutoRefresh = propertyDefault(
