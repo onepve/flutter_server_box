@@ -121,13 +121,25 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     return '未登录';
   }
 
+  /// 构建完整的头像 URL
   String _fullAvatarUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     return url.startsWith('http') ? url : '${SyncConfig.serverUrl}$url';
   }
 
+  /// 创建带 JWT 认证头的 NetworkImage（头像端点需要 Bearer token）
+  ImageProvider? _avatarImage(String? avatarUrl, String? token) {
+    final url = _fullAvatarUrl(avatarUrl);
+    if (url.isEmpty) return null;
+    final headers = <String, String>{};
+    if (token != null && token.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return NetworkImage(url, headers: headers);
+  }
+
   Widget _buildLoginStatus(SyncState s) {
-    final avatarUrl = _fullAvatarUrl(s.avatarUrl);
+    final avatarProvider = _avatarImage(s.avatarUrl, s.token);
     return CardX(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -142,8 +154,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
               child: CircleAvatar(
                 radius: 30,
                 backgroundColor: Colors.grey.shade200,
-                backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                child: avatarUrl.isEmpty
+                backgroundImage: avatarProvider,
+                child: avatarProvider == null
                     ? Icon(Icons.person, size: 26, color: Colors.grey.shade500)
                     : null,
               ),
@@ -177,9 +189,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
               children: [
                 CircleAvatar(
                   radius: 32, backgroundColor: Colors.grey.shade200,
-                  backgroundImage: _fullAvatarUrl(live.avatarUrl).isNotEmpty
-                      ? NetworkImage(_fullAvatarUrl(live.avatarUrl)) : null,
-                  child: _fullAvatarUrl(live.avatarUrl).isEmpty
+                  backgroundImage: _avatarImage(live.avatarUrl, live.token),
+                  child: _avatarImage(live.avatarUrl, live.token) == null
                       ? Icon(Icons.person, size: 28, color: Colors.grey.shade500) : null,
                 ),
                 Positioned(

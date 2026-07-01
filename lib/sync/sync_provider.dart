@@ -14,6 +14,7 @@ final _logger = Logger('SyncProvider');
 /// 同步模块状态
 class SyncState {
   final bool loggedIn;
+  final String? token;
   final String? username;
   final String? nickname;
   final String? avatarUrl;
@@ -29,6 +30,7 @@ class SyncState {
 
   const SyncState({
     this.loggedIn = false,
+    this.token,
     this.username,
     this.nickname,
     this.avatarUrl,
@@ -45,6 +47,7 @@ class SyncState {
 
   SyncState copyWith({
     bool? loggedIn,
+    String? token,
     String? username,
     String? nickname,
     String? avatarUrl,
@@ -61,6 +64,7 @@ class SyncState {
   }) {
     return SyncState(
       loggedIn: loggedIn ?? this.loggedIn,
+      token: token ?? this.token,
       username: username ?? this.username,
       nickname: nickname ?? this.nickname,
       avatarUrl: avatarUrl ?? this.avatarUrl,
@@ -99,6 +103,7 @@ class SyncNotifier extends Notifier<SyncState> {
     if (token != null && token.isNotEmpty && name != null) {
       state = state.copyWith(
         loggedIn: true,
+        token: token,
         username: name,
         nickname: nick,
         avatarUrl: avatar,
@@ -157,6 +162,7 @@ class SyncNotifier extends Notifier<SyncState> {
       }
       state = state.copyWith(
         loggedIn: true,
+        token: result.token,
         username: result.username,
         nickname: result.nickname,
         avatarUrl: result.avatarUrl,
