@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 env:
-  APP_NAME: ServerBox
+  APP_NAME: CBox
   BUILD_TAG: test-build-${{ github.run_number }}-${{ github.sha }}
 
 jobs:
