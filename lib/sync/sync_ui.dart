@@ -1,8 +1,11 @@
+import 'dart:io' as io;
+
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:server_box/sync/avatar_crop_dialog.dart';
 import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_config.dart';
 import 'package:server_box/sync/sync_engine.dart';
@@ -43,7 +46,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _section('同步账号'),
             _buildLoginStatus(s),
@@ -809,9 +812,23 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       if (result == null || result.files.isEmpty) return;
       final filePath = result.files.single.path;
       if (filePath == null) return;
+
+      // 弹出圆形裁剪对话框
+      final croppedBytes = await AvatarCropDialog.show(context, io.File(filePath));
+      if (croppedBytes == null) return; // 用户取消
+
+      // 将裁剪后的字节写为临时文件
+      final tempDir = await io.Directory.systemTemp.createTemp('avatar_');
+      final cropFile = io.File('${tempDir.path}/avatar_cropped.png');
+      await cropFile.writeAsBytes(croppedBytes);
+
       final newUrl = await context.showLoadingDialog(
-        fn: () => SyncClient.shared.uploadAvatar(filePath),
+        fn: () => SyncClient.shared.uploadAvatar(cropFile.path),
       );
+
+      // 清理临时文件
+      try { await cropFile.delete(); await tempDir.delete(); } catch (_) {}
+
       if (newUrl.$1 != null) {
         await SyncConfig.avatarUrl.write(newUrl.$1);
         ref.read(syncNotifierProvider.notifier).refreshProfile();
