@@ -34,6 +34,10 @@ abstract final class SyncConfig {
   static const resendVerification = '$_base/auth/resend-verification';
   static const verifyEmail = '$_base/auth/verify-email';
   static const uploadAvatar = '$_base/auth/profile/avatar';
+  static const publicConfig = '$_base/auth/config';
+  static const inviteUserCreate = '$_base/invite/user-create';
+  static const inviteUserList = '$_base/invite/user-list';
+  static const inviteUserDelete = '$_base/invite/user-delete';
 
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');

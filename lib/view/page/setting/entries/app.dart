@@ -115,12 +115,11 @@ extension _App on _AppSettingsPageState {
         },
       ),
       onTap: () => Fns.throttle(
-        () => AppUpdateIface.doUpdate(
+        () => showCustomUpdateDialog(
           context: context,
-          build: BuildData.build,
           githubReleasesUrl: Urls.githubReleasesApi,
+          build: BuildData.build,
           storeUrl: Urls.appStore,
-          force: BuildMode.isDebug,
         ),
       ),
       trailing: StoreSwitch(prop: _setting.autoCheckAppUpdate),

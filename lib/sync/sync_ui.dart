@@ -245,36 +245,62 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         const SizedBox(height: 8),
         Center(child: Text('账号操作', style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600))),
         const SizedBox(height: 8),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.logout, size: 16),
-            label: const Text('退出登录'),
-            onPressed: () {
-              context.pop();
-              ref.read(syncNotifierProvider.notifier).logout();
-              setState(() {});
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey.shade700,
-              padding: const EdgeInsets.symmetric(vertical: 10),
+        Row(children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.logout, size: 16),
+              label: const Text('退出登录'),
+              onPressed: () {
+                context.pop();
+                ref.read(syncNotifierProvider.notifier).logout();
+                setState(() {});
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.grey.shade700,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.delete_forever, size: 16, color: Colors.red),
-            label: const Text('删除云端数据', style: TextStyle(color: Colors.red)),
-            onPressed: () {
-              context.pop();
-              _startDeleteFlow();
+          const SizedBox(width: 12),
+          Expanded(
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.delete_forever, size: 16, color: Colors.red),
+              label: const Text('删除云端数据', style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                context.pop();
+                _startDeleteFlow();
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: BorderSide(color: Colors.red.shade200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        Center(
+          child: GestureDetector(
+            onTap: () async {
+              final url = Uri.parse(SyncConfig.webProfileUrl);
+              try {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              } catch (_) {
+                await Clipboard.setData(ClipboardData(text: url.toString()));
+                context.showSnackBar('链接已复制到剪贴板');
+              }
             },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: BorderSide(color: Colors.red.shade200),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Text.rich(
+              TextSpan(
+                text: '注销账号请 ',
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                children: [
+                  TextSpan(
+                    text: '前往网站自助操作',
+                    style: TextStyle(color: Colors.blue.shade600, decoration: TextDecoration.underline),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -403,33 +429,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (s.error != null)
       CardX(child: ListTile(leading: const Icon(Icons.error_outline, color: Colors.red),
         title: Text(s.error!, style: const TextStyle(color: Colors.red)))),
-    // ── 注销账号说明 ──
-    CardX(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline, size: 16, color: Colors.grey.shade500),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text.rich(
-                TextSpan(
-                  text: '注销账号请 ',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                  children: [
-                    TextSpan(
-                      text: '前往网站自助操作',
-                      style: TextStyle(color: Colors.blue.shade600, decoration: TextDecoration.underline),
-                    ),
-                    const TextSpan(text: '（设置 → 个人信息 → 底部危险区域）'),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
   ];
 
   Widget _syncButtons(SyncState s) {
@@ -786,23 +785,79 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   Future<void> _showRegisterDialog() async {
+    // 先获取服务端配置，判断是否需要邀请码
+    bool requireInvite = true;
+    try {
+      final cfg = await context.showLoadingDialog(
+        fn: () => SyncClient.shared.getConfig(),
+      );
+      requireInvite = cfg.$1?.requireInvite ?? true;
+    } catch (_) {
+      // 获取配置失败，默认需要邀请码
+    }
+
     final uCtrl = TextEditingController(), nCtrl = TextEditingController(), eCtrl = TextEditingController();
     final pCtrl = TextEditingController(), iCtrl = TextEditingController();
     final uN = FocusNode(), nN = FocusNode(), eN = FocusNode(), pN = FocusNode(), iN = FocusNode();
-    final r = await context.showRoundDialog<bool>(title: '注册同步账号', child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Text('需要邀请码才能注册', style: UIs.textGrey), UIs.height13,
-      Input(label: '用户名 *（英文数字下划线，3-64位）', controller: uCtrl, node: uN, onSubmitted: (_) => nN.requestFocus()), UIs.height7,
-      Input(label: '昵称（选填，中英文64位内）', controller: nCtrl, node: nN, onSubmitted: (_) => eN.requestFocus()), UIs.height7,
-      Input(label: '邮箱地址 *', controller: eCtrl, node: eN, onSubmitted: (_) => pN.requestFocus()), UIs.height7,
-      Input(label: '密码 *（8-128位）', controller: pCtrl, node: pN, obscureText: true, onSubmitted: (_) => iN.requestFocus()), UIs.height7,
-      Input(label: '邀请码 *', controller: iCtrl, node: iN, onSubmitted: (_) => context.pop(true)),
-    ]), actions: [TextButton(onPressed: () => context.pop(false), child: const Text('取消')), ElevatedButton(onPressed: () => context.pop(true), child: const Text('注册'))]);
+
+    // 规则说明弹窗
+    void showRule(String title, String content) {
+      context.showRoundDialog(
+        title: title,
+        child: Text(content, style: const TextStyle(fontSize: 13)),
+        actions: [TextButton(onPressed: () => context.pop(), child: const Text('知道了'))],
+      );
+    }
+
+    final r = await context.showRoundDialog<bool>(title: '注册同步账号',
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (requireInvite)
+          Text('当前系统需要邀请码才能注册', style: UIs.textGrey)
+        else
+          Text('当前系统开放注册，邀请码选填', style: TextStyle(fontSize: 12, color: Colors.green.shade700)),
+        UIs.height13,
+        Row(children: [
+          Expanded(child: Input(label: '用户名 *', controller: uCtrl, node: uN,
+            onSubmitted: (_) => nN.requestFocus())),
+          GestureDetector(
+            onTap: () => showRule('用户名规则', '英文数字下划线\n3-64位\n例如: john_2026'),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Icon(Icons.help_outline, size: 18, color: Colors.grey.shade400),
+            ),
+          ),
+        ]), UIs.height7,
+        Input(label: '昵称（选填）', controller: nCtrl, node: nN,
+          onSubmitted: (_) => eN.requestFocus()), UIs.height7,
+        Input(label: '邮箱地址 *', controller: eCtrl, node: eN,
+          onSubmitted: (_) => pN.requestFocus()), UIs.height7,
+        Row(children: [
+          Expanded(child: Input(label: '密码 *', controller: pCtrl, node: pN, obscureText: true,
+            onSubmitted: (_) => requireInvite ? iN.requestFocus() : context.pop(true))),
+          GestureDetector(
+            onTap: () => showRule('密码规则', '8-128位\n建议使用大小写字母+数字+符号组合'),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Icon(Icons.help_outline, size: 18, color: Colors.grey.shade400),
+            ),
+          ),
+        ]), UIs.height7,
+        if (requireInvite)
+          Input(label: '邀请码 *', controller: iCtrl, node: iN,
+            onSubmitted: (_) => context.pop(true)),
+      ]),
+      actions: [TextButton(onPressed: () => context.pop(false), child: const Text('取消')),
+        ElevatedButton(onPressed: () => context.pop(true), child: const Text('注册'))]);
     if (r != true) { _dispose([uCtrl,nCtrl,eCtrl,pCtrl,iCtrl],[uN,nN,eN,pN,iN]); return; }
     final u = uCtrl.text.trim(), n = nCtrl.text.trim(), e = eCtrl.text.trim(), p = pCtrl.text.trim(), inv = iCtrl.text.trim();
     _dispose([uCtrl,nCtrl,eCtrl,pCtrl,iCtrl],[uN,nN,eN,pN,iN]);
-    if (u.isEmpty||e.isEmpty||p.isEmpty||inv.isEmpty) { context.showSnackBar('请填写所有必填字段（带 * 号）'); return; }
+    if (u.isEmpty||e.isEmpty||p.isEmpty) { context.showSnackBar('请填写所有必填字段（带 * 号）'); return; }
+    if (requireInvite && inv.isEmpty) { context.showSnackBar('当前系统需要邀请码才能注册'); return; }
     try {
-      final resp = await context.showLoadingDialog(fn: () => SyncClient.shared.register(username: u, nickname: n.isNotEmpty?n:null, email: e, password: p, inviteCode: inv));
+      final resp = await context.showLoadingDialog(fn: () => SyncClient.shared.register(
+        username: u, nickname: n.isNotEmpty?n:null, email: e, password: p,
+        inviteCode: requireInvite ? inv : (inv.isNotEmpty ? inv : null),
+      ));
       if (resp.$1 != null) {
         if (resp.$1!.recoveryKey != null) {
           await context.showRoundDialog(title: '注册成功', child: Column(mainAxisSize: MainAxisSize.min, children: [

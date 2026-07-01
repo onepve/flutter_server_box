@@ -13,6 +13,7 @@ import 'package:server_box/data/provider/server/all.dart';
 import 'package:server_box/data/res/build_data.dart';
 import 'package:server_box/data/res/store.dart';
 import 'package:server_box/data/res/url.dart';
+import 'package:server_box/sync/custom_update.dart';
 import 'package:server_box/view/page/home_tab.dart';
 import 'package:server_box/view/page/macos_menu_bar.dart';
 import 'package:server_box/view/page/setting/entry.dart';
@@ -267,11 +268,11 @@ class _HomePageState extends ConsumerState<HomePage>
     _goAuth();
 
     if (Stores.setting.autoCheckAppUpdate.fetch()) {
-      AppUpdateIface.doUpdate(
-        build: BuildData.build,
-        githubReleasesUrl: Urls.githubReleasesApi,
-        storeUrl: Urls.appStore,
+      showCustomUpdateDialog(
         context: context,
+        githubReleasesUrl: Urls.githubReleasesApi,
+        build: BuildData.build,
+        storeUrl: Urls.appStore,
       );
     }
     MethodChans.updateHomeWidget();

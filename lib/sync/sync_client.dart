@@ -288,14 +288,16 @@ class SyncClient {
     String? nickname,
     required String email,
     required String password,
-    required String inviteCode,
+    String? inviteCode,
   }) async {
     final body = <String, dynamic>{
       'username': username,
       'email': email,
       'password': password,
-      'invite_code': inviteCode,
     };
+    if (inviteCode != null && inviteCode.trim().isNotEmpty) {
+      body['invite_code'] = inviteCode.trim();
+    }
     if (nickname != null && nickname.trim().isNotEmpty) {
       body['nickname'] = nickname.trim();
     }
@@ -405,5 +407,47 @@ class SyncClient {
       'code': code,
     });
     return (resp.data as Map<String, dynamic>)['message'] as String;
+  }
+
+  /// 获取系统公开配置（是否需要邀请码注册等）
+  Future<({bool requireInvite, bool allowUserCreate, int maxPerUser})> getConfig() async {
+    final resp = await _dio.get(SyncConfig.publicConfig);
+    final data = resp.data as Map<String, dynamic>;
+    return (
+      requireInvite: data['require_invite_for_registration'] as bool,
+      allowUserCreate: data['allow_user_create_invite'] as bool,
+      maxPerUser: data['max_invites_per_user'] as int,
+    );
+  }
+
+  /// 普通用户创建自己的邀请码
+  Future<({String code, int maxUses, int usedCount, bool isActive, String? expiresAt})> createUserInvite({
+    required int maxUses,
+    required int expiresInDays,
+  }) async {
+    final resp = await _dio.post(SyncConfig.inviteUserCreate, data: {
+      'max_uses': maxUses,
+      'expires_in_days': expiresInDays,
+    });
+    final data = resp.data as Map<String, dynamic>;
+    return (
+      code: data['code'] as String,
+      maxUses: data['max_uses'] as int,
+      usedCount: data['used_count'] as int,
+      isActive: data['is_active'] as bool,
+      expiresAt: data['expires_at'] as String?,
+    );
+  }
+
+  /// 获取自己创建的邀请码列表
+  Future<List<Map<String, dynamic>>> listUserInvites() async {
+    final resp = await _dio.get(SyncConfig.inviteUserList);
+    final data = resp.data as Map<String, dynamic>;
+    return (data['codes'] as List).cast<Map<String, dynamic>>();
+  }
+
+  /// 删除自己创建的邀请码
+  Future<void> deleteUserInvite(int inviteId) async {
+    await _dio.delete(SyncConfig.inviteUserDelete, queryParameters: {'invite_id': inviteId});
   }
 }
