@@ -1,6 +1,121 @@
 import 'package:dio/dio.dart';
 import 'package:server_box/sync/sync_config.dart';
 
+/// 解析 API 错误，返回用户友好的中文错误信息
+class SyncError {
+  final String title;
+  final String message;
+
+  const SyncError({required this.title, required this.message});
+
+  @override
+  String toString() => '$title: $message';
+
+  /// 从 DioException 或任意异常解析出 SyncError
+  static SyncError parse(dynamic error) {
+    if (error is SyncTOTPRequiredException) {
+      return const SyncError(title: '需要 TOTP 验证', message: '请输入 TOTP 验证码');
+    }
+    if (error is SyncException) {
+      return SyncError(title: error.title, message: error.message);
+    }
+    if (error is DioException) {
+      return _fromDio(error);
+    }
+    return SyncError(title: '未知错误', message: error.toString());
+  }
+
+  static SyncError _fromDio(DioException e) {
+    // 尝试提取服务端返回的 detail
+    String? serverMsg;
+    final data = e.response?.data;
+    if (data is Map && data.containsKey('detail')) {
+      serverMsg = data['detail'] as String?;
+    }
+
+    // 网络层错误（无响应）
+    if (e.response == null) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.sendTimeout:
+        case DioExceptionType.receiveTimeout:
+          return const SyncError(title: '网络超时', message: '连接服务器超时，请检查网络或稍后重试');
+        case DioExceptionType.connectionError:
+          return const SyncError(title: '网络错误', message: '无法连接到服务器\n请检查网络连接或服务端地址是否正确');
+        case DioExceptionType.cancel:
+          return const SyncError(title: '请求已取消', message: '');
+        default:
+          return const SyncError(title: '网络错误', message: '发生网络异常，请稍后重试');
+      }
+    }
+
+    // 有响应的错误 — 根据状态码 + 服务端消息分类
+    final code = e.response!.statusCode ?? 0;
+    final msg = serverMsg ?? '';
+
+    if (code == 401) {
+      if (msg.contains('TOTP')) {
+        return const SyncError(title: 'TOTP 验证失败', message: 'TOTP 验证码错误，请重新输入');
+      }
+      if (msg.contains('密码') || msg.contains('credential')) {
+        return const SyncError(title: '登录失败', message: '用户名或密码错误，请检查后重试');
+      }
+      return SyncError(title: '认证失败', message: msg.isNotEmpty ? msg : '登录凭据无效，请重新登录');
+    }
+
+    if (code == 400) {
+      if (msg.contains('邀请码') || msg.contains('invite')) {
+        return SyncError(title: '邀请码错误', message: msg);
+      }
+      if (msg.contains('用户名') && (msg.contains('占用') || msg.contains('存在'))) {
+        return SyncError(title: '注册失败', message: msg);
+      }
+      if (msg.contains('邮箱') && (msg.contains('注册') || msg.contains('存在'))) {
+        return SyncError(title: '注册失败', message: msg);
+      }
+      if (msg.contains('验证码') || msg.contains('code')) {
+        return SyncError(title: '验证码错误', message: msg);
+      }
+      if (msg.contains('密码') && msg.contains('重置')) {
+        return SyncError(title: '密码重置失败', message: msg);
+      }
+      return SyncError(title: '请求失败', message: msg.isNotEmpty ? msg : '参数有误');
+    }
+
+    if (code == 404) {
+      return SyncError(title: '未找到', message: msg.isNotEmpty ? msg : '请求的资源不存在');
+    }
+
+    if (code == 429) {
+      return SyncError(title: '操作太频繁', message: msg.isNotEmpty ? msg : '请稍后重试');
+    }
+
+    if (code >= 500) {
+      return SyncError(title: '服务器错误', message: msg.isNotEmpty ? msg : '服务器内部错误，请联系管理员');
+    }
+
+    return SyncError(
+      title: '请求失败',
+      message: msg.isNotEmpty ? msg : '未知错误 (HTTP $code)',
+    );
+  }
+}
+
+/// 服务器要求 TOTP 验证
+class SyncTOTPRequiredException implements Exception {
+  @override
+  String toString() => '需要 TOTP 验证码';
+}
+
+/// 带标题的同步异常
+class SyncException implements Exception {
+  final String title;
+  final String message;
+  const SyncException({required this.title, required this.message});
+  @override
+  String toString() => '$title: $message';
+}
+
 /// 同步 API HTTP 客户端
 ///
 /// 处理所有与服务端的通信：登录、上传、下载、差异对比。
@@ -275,10 +390,4 @@ class SyncClient {
     });
     return (resp.data as Map<String, dynamic>)['message'] as String;
   }
-}
-
-/// 服务器要求 TOTP 验证
-class SyncTOTPRequiredException implements Exception {
-  @override
-  String toString() => '需要 TOTP 验证码';
 }

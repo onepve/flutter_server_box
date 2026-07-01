@@ -79,6 +79,36 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   }
 
   // ════════════════════════════════════════════
+  //  错误弹窗
+  // ════════════════════════════════════════════
+
+  /// 弹出详细错误对话框
+  Future<void> _showError(SyncError err) async {
+    await context.showRoundDialog(
+      title: err.title,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
+        const SizedBox(height: 14),
+        Text(err.message, style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
+      ]),
+      actions: [TextButton(onPressed: () => context.pop(), child: const Text('知道了'))],
+    );
+  }
+
+  /// 弹出成功对话框
+  Future<void> _showSuccess(String title, String message) async {
+    await context.showRoundDialog(
+      title: title,
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.check_circle_outline, size: 48, color: Colors.green.shade400),
+        const SizedBox(height: 14),
+        Text(message, style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
+      ]),
+      actions: [TextButton(onPressed: () => context.pop(), child: const Text('知道了'))],
+    );
+  }
+
+  // ════════════════════════════════════════════
   //  登录状态卡片
   // ════════════════════════════════════════════
 
@@ -247,7 +277,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       );
       context.showSnackBar(sendMsg.$1 ?? '验证码已发送');
     } catch (e) {
-      context.showSnackBar('发送失败: $e');
+      await _showError(SyncError.parse(e));
       return;
     }
 
@@ -271,12 +301,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       await context.showLoadingDialog(
         fn: () => SyncClient.shared.verifyEmail(code: code),
       );
-      context.showSnackBar('邮箱验证成功 ✓');
-      // 刷新资料以更新状态
+      await _showSuccess('邮箱验证成功', '邮箱验证成功 ✓\n解密密钥（UUID）已发送到您的邮箱');
       ref.read(syncNotifierProvider.notifier).refreshProfile();
       setState(() {});
     } catch (e) {
-      context.showSnackBar('验证失败: $e');
+      await _showError(SyncError.parse(e));
     }
   }
 
@@ -514,10 +543,10 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         final exportRes = await context.showLoadingDialog(fn: () => SyncClient.shared.exportToEmail());
         exportMsg = exportRes.$1;
       } catch (e) {
-        context.showSnackBar('导出失败: $e');
+        await _showError(SyncError.parse(e));
         final cont = await context.showRoundDialog<bool>(
           title: '导出失败',
-          child: Text('导出失败，是否仍然删除数据？\n错误: $e'),
+          child: Text('导出失败，是否仍然删除数据？\n错误: ${SyncError.parse(e).message}'),
           actions: Btnx.cancelOk,
         );
         if (cont != true) return;
@@ -532,7 +561,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       context.showSnackBar(msg);
       setState(() {});
     } catch (e) {
-      context.showSnackBar('删除失败: $e');
+      await _showError(SyncError.parse(e));
     }
   }
 
@@ -563,7 +592,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       await context.showLoadingDialog(fn: () => SyncClient.shared.verifyDeleteCode(code: code));
       return true;
     } catch (e) {
-      context.showSnackBar('验证失败: $e');
+      await _showError(SyncError.parse(e));
       return false;
     }
   }
@@ -575,7 +604,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       );
       context.showSnackBar(sendRes.$1 ?? '验证码已发送');
     } catch (e) {
-      context.showSnackBar('发送失败: $e');
+      await _showError(SyncError.parse(e));
       return false;
     }
 
@@ -597,7 +626,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       await context.showLoadingDialog(fn: () => SyncClient.shared.verifyDeleteCode(code: code));
       return true;
     } catch (e) {
-      context.showSnackBar('验证失败: $e');
+      await _showError(SyncError.parse(e));
       return false;
     }
   }
@@ -627,7 +656,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     } on SyncTOTPRequiredException {
       return true;
     } catch (e) {
-      context.showSnackBar('密码错误');
+      await _showError(SyncError.parse(e));
       return false;
     }
   }
@@ -660,10 +689,18 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     final u = uCtrl.text.trim(), p = pCtrl.text.trim(), t = tCtrl.text.trim();
     uCtrl.dispose(); pCtrl.dispose(); tCtrl.dispose(); uNode.dispose(); pNode.dispose();
     if (u.isEmpty || p.isEmpty) { context.showSnackBar('用户名和密码不能为空'); return; }
-    final err = await ref.read(syncNotifierProvider.notifier).login(username: u, password: p, totpCode: t.isNotEmpty ? t : null);
-    if (err == null) { context.showSnackBar('登录成功'); setState(() {}); }
-    else if (err == 'totp_required') { context.showSnackBar('需要 TOTP 验证码'); _showLoginWithTotp(u, p); }
-    else { context.showSnackBar('登录失败: $err'); }
+    try {
+      final err = await ref.read(syncNotifierProvider.notifier).login(username: u, password: p, totpCode: t.isNotEmpty ? t : null);
+      if (err == null) {
+        context.showSnackBar('登录成功');
+        setState(() {});
+      } else if (err == 'totp_required') {
+        context.showSnackBar('需要 TOTP 验证码');
+        _showLoginWithTotp(u, p);
+      }
+    } catch (e) {
+      await _showError(SyncError.parse(e));
+    }
   }
 
   Future<void> _showLoginWithTotp(String u, String p) async {
@@ -675,9 +712,12 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (r != true) { ctrl.dispose(); return; }
     final code = ctrl.text.trim(); ctrl.dispose();
     if (code.isEmpty) { context.showSnackBar('验证码不能为空'); return; }
-    final err = await ref.read(syncNotifierProvider.notifier).login(username: u, password: p, totpCode: code);
-    if (err == null) { context.showSnackBar('登录成功'); setState(() {}); }
-    else { context.showSnackBar('登录失败: $err'); }
+    try {
+      final err = await ref.read(syncNotifierProvider.notifier).login(username: u, password: p, totpCode: code);
+      if (err == null) { context.showSnackBar('登录成功'); setState(() {}); }
+    } catch (e) {
+      await _showError(SyncError.parse(e));
+    }
   }
 
   Future<void> _showRegisterDialog() async {
@@ -707,8 +747,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             const Text('此密钥仅显示一次！', style: TextStyle(color: Colors.red, fontSize: 12)),
           ]), actions: [TextButton(onPressed: () => context.pop(), child: const Text('知道了'))]);
         } else { context.showSnackBar(resp.$1!.message); }
-      } else { context.showSnackBar('注册失败: ${resp.$2}'); }
-    } catch (e) { context.showSnackBar('网络错误: $e'); }
+      } else { await _showError(SyncError.parse(Exception(resp.$2 ?? '注册失败'))); }
+    } catch (e) { await _showError(SyncError.parse(e)); }
   }
 
   void _dispose(List<TextEditingController> cs, List<FocusNode> ns) {
@@ -735,8 +775,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         ]), actions: [TextButton(onPressed: ()=>context.pop(false), child: const Text('稍后')), ElevatedButton(onPressed: ()=>context.pop(true), child: const Text('重置密码'))]);
         if (ok == true) _showResetPasswordDialog(resp.$1!.token);
       } else if (resp.$1 != null) { context.showSnackBar(resp.$1!.message); }
-      else { context.showSnackBar('请求失败: ${resp.$2}'); }
-    } catch (e) { context.showSnackBar('网络错误: $e'); }
+      else { await _showError(SyncError.parse(Exception(resp.$2 ?? '请求失败'))); }
+    } catch (e) { await _showError(SyncError.parse(e)); }
   }
 
   Future<void> _showResetPasswordDialog(String? initialToken) async {
@@ -755,8 +795,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (p.length<8) { context.showSnackBar('密码至少 8 位'); return; }
     try {
       await context.showLoadingDialog(fn: ()=>SyncClient.shared.resetPassword(token:t, newPassword:p));
-      context.showSnackBar('密码已重置成功');
-    } catch (e) { context.showSnackBar('重置失败: $e'); }
+      await _showSuccess('密码已重置', '密码已重置成功，请使用新密码登录');
+    } catch (e) { await _showError(SyncError.parse(e)); }
   }
 
   // ════════════════════════════════════════════
@@ -771,8 +811,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       notifier.checkForUpdates();
       setState(() {});
     } else if (r.$2 != null) {
-      notifier.logout();
-      context.showSnackBar('同步失败: ${r.$2}');
+      await _showError(SyncError.parse(Exception(r.$2!)));
     }
   }
 
@@ -782,7 +821,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (e.$1 == null) {
       context.showSnackBar('上传成功');
     } else {
-      context.showSnackBar('上传失败: ${e.$1}');
+      await _showError(SyncError.parse(Exception(e.$1!)));
     }
     setState(() {});
   }
@@ -800,7 +839,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     if (e.$1 == null) {
       context.showSnackBar('下载恢复成功');
     } else {
-      context.showSnackBar('下载失败: ${e.$1}');
+      await _showError(SyncError.parse(Exception(e.$1!)));
     }
     setState(() {});
   }

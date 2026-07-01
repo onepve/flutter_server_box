@@ -171,7 +171,7 @@ class SyncNotifier extends Notifier<SyncState> {
     } catch (e) {
       _logger.warning('Login failed', e);
       state = state.copyWith(syncing: false, error: e.toString());
-      return e.toString();
+      rethrow; // 抛出原始异常，让 UI 层解析具体错误
     }
   }
 
