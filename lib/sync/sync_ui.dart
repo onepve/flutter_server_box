@@ -413,6 +413,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   //  登录/退出/危险按钮
   // ════════════════════════════════════════════
 
+  // ignore: unused_element
   Widget _buildLoginButton(SyncState s) => CardX(child: ListTile(
     leading: const Icon(Icons.login), title: const Text('登录同步账户'),
     subtitle: Text('服务端地址已固定，无需手动配置', style: UIs.textGrey),
@@ -902,7 +903,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       if (newUrl.$1 != null) {
         await SyncConfig.avatarUrl.write(newUrl.$1);
         // 立即更新 Riverpod 状态→两个头像位置同步刷新
-        ref.read(syncNotifierProvider.notifier).updateAvatarUrl(newUrl.$1);
+        ref.read(syncNotifierProvider.notifier).updateAvatarUrl(newUrl.$1!);
         // 后台刷新完整资料（更新昵称等）
         ref.read(syncNotifierProvider.notifier).refreshProfile();
         if (context.mounted) {
