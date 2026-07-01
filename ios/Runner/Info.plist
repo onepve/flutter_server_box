@@ -12,8 +12,10 @@
 		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
+		<key>CFBundleDisplayName</key>
+		<string>ServerBox-工程版</string>
 		<key>CFBundleName</key>
-		<string>ServerBox</string>
+		<string>ServerBox-工程版</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>

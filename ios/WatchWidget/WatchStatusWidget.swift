@@ -34,7 +34,7 @@ struct WatchProvider: TimelineProvider {
     }
 
     private func loadEntry() -> WatchEntry {
-        let appGroupId = "group.com.lollipopkit.toolbox"
+        let appGroupId = "group.com.onepve.serverbox"
         guard let defaults = UserDefaults(suiteName: appGroupId) else {
             return WatchEntry(date: Date(), status: Status(name: "Server", cpu: "--%", mem: "-", disk: "-", net: "-"))
         }

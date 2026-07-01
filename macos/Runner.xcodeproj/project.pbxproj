@@ -511,7 +511,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0.1450;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onepve.serverbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
@@ -648,7 +648,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0.1450;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onepve.serverbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -679,7 +679,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				MARKETING_VERSION = 1.0.1450;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lollipopkit.toolbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onepve.serverbox;
 				PRODUCT_NAME = "Server Box";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				"PROVISIONING_PROFILE_SPECIFIER[sdk=macosx*]" = "ServerBox AppStore Profile";
