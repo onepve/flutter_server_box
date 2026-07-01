@@ -181,7 +181,7 @@ class SyncClient {
     return (
       token: token,
       userId: data['user_id'] as int,
-      uuid: data['uuid'] as String,
+      uuid: (data['uuid'] ?? data['user_uuid']) as String,
       username: data['username'] as String,
       nickname: data['nickname'] as String?,
       avatarUrl: data['avatar_url'] as String?,
