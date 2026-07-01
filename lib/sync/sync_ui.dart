@@ -1,6 +1,7 @@
 import 'package:fl_lib/fl_lib.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:server_box/sync/sync_client.dart';
 import 'package:server_box/sync/sync_config.dart';
@@ -167,12 +168,30 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
       title: '个人资料',
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Center(
-          child: CircleAvatar(
-            radius: 32, backgroundColor: Colors.grey.shade200,
-            backgroundImage: _fullAvatarUrl(s.avatarUrl).isNotEmpty
-                ? NetworkImage(_fullAvatarUrl(s.avatarUrl)) : null,
-            child: _fullAvatarUrl(s.avatarUrl).isEmpty
-                ? Icon(Icons.person, size: 28, color: Colors.grey.shade500) : null,
+          child: Stack(
+            children: [
+              CircleAvatar(
+                radius: 32, backgroundColor: Colors.grey.shade200,
+                backgroundImage: _fullAvatarUrl(s.avatarUrl).isNotEmpty
+                    ? NetworkImage(_fullAvatarUrl(s.avatarUrl)) : null,
+                child: _fullAvatarUrl(s.avatarUrl).isEmpty
+                    ? Icon(Icons.person, size: 28, color: Colors.grey.shade500) : null,
+              ),
+              Positioned(
+                bottom: 0, right: 0,
+                child: GestureDetector(
+                  onTap: () => _pickAndUploadAvatar(s),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         UIs.height13,
@@ -777,6 +796,33 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         } else { context.showSnackBar(resp.$1!.message); }
       } else { await _showError(SyncError.parse(Exception(resp.$2 ?? '注册失败'))); }
     } catch (e) { await _showError(SyncError.parse(e)); }
+  }
+
+  /// 选择图片并上传头像
+  Future<void> _pickAndUploadAvatar(SyncState s) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: false,
+      );
+      if (result == null || result.files.isEmpty) return;
+      final filePath = result.files.single.path;
+      if (filePath == null) return;
+      final newUrl = await context.showLoadingDialog(
+        fn: () => SyncClient.shared.uploadAvatar(filePath),
+      );
+      if (newUrl.$1 != null) {
+        await SyncConfig.avatarUrl.write(newUrl.$1);
+        ref.read(syncNotifierProvider.notifier).refreshProfile();
+        if (context.mounted) {
+          context.showSnackBar('头像上传成功');
+          setState(() {});
+        }
+      }
+    } catch (e) {
+      if (context.mounted) await _showError(SyncError.parse(e));
+    }
   }
 
   void _dispose(List<TextEditingController> cs, List<FocusNode> ns) {

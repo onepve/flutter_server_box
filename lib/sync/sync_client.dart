@@ -381,6 +381,15 @@ class SyncClient {
     return (resp.data as Map<String, dynamic>)['message'] as String;
   }
 
+  /// 上传头像（multipart）
+  Future<String> uploadAvatar(String filePath) async {
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(filePath),
+    });
+    final resp = await _dio.post(SyncConfig.uploadAvatar, data: formData);
+    return (resp.data as Map<String, dynamic>)['avatar_url'] as String;
+  }
+
   /// 验证邮箱
   Future<String> verifyEmail({required String code}) async {
     final profile = await getProfile();

@@ -33,6 +33,7 @@ abstract final class SyncConfig {
   static const totpStatus = '$_base/auth/totp/status';
   static const resendVerification = '$_base/auth/resend-verification';
   static const verifyEmail = '$_base/auth/verify-email';
+  static const uploadAvatar = '$_base/auth/profile/avatar';
 
   /// 同步相关安全存储
   static final token = SecureProp('sync_jwt_token');
