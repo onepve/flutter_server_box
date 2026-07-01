@@ -195,7 +195,7 @@ class SettingStore extends HiveStore {
   late final keepStatusWhenErr = propertyDefault('keepStatusWhenErr', false);
 
   /// Parse container stat
-  late final containerParseStat = propertyDefault('containerParseStat', true);
+  late final containerParseStat = propertyDefault('containerParseStat', false);
 
   /// Auto refresh container status
   late final containerAutoRefresh = propertyDefault(

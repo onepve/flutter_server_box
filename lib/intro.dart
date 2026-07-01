@@ -134,8 +134,14 @@ final class _IntroPage extends StatelessWidget {
         ).cardx,
         SizedBox(height: padTop),
         Text(
-          'This step is recommended for secure backup functionality.',
+          '设置备份密码可保护本地加密数据。',
           style: UIs.textGrey,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '如果使用服务器云同步，可跳过此步骤，\n后续在设置中随时补填。',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade400),
           textAlign: TextAlign.center,
         ),
         UIs.height77,

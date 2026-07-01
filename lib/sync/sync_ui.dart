@@ -46,7 +46,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           children: [
             _section('同步账号'),
             _buildLoginStatus(s),
-            if (!s.loggedIn) _buildLoginButton(s),
             if (s.loggedIn) ..._loggedInItems(s),
 
             if (s.loggedIn) ...[
@@ -128,7 +127,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     return CardX(
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: s.loggedIn ? () => _showProfileDialog(s) : null,
+        onTap: () => s.loggedIn ? _showProfileDialog(s) : _showLoginDialog(),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
           child: Column(
@@ -206,6 +205,44 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         const SizedBox(height: 10),
         if (!s.totpEnabled) _totpPrompt(),
         if (s.totpEnabled) _totpEnabled(),
+        const SizedBox(height: 16),
+        const Divider(),
+        const SizedBox(height: 8),
+        Center(child: Text('账号操作', style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontWeight: FontWeight.w600))),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.logout, size: 16),
+            label: const Text('退出登录'),
+            onPressed: () {
+              context.pop();
+              ref.read(syncNotifierProvider.notifier).logout();
+              setState(() {});
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.delete_forever, size: 16, color: Colors.red),
+            label: const Text('删除云端数据', style: TextStyle(color: Colors.red)),
+            onPressed: () {
+              context.pop();
+              _startDeleteFlow();
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: BorderSide(color: Colors.red.shade200),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+        ),
       ]),
       actions: [TextButton(onPressed: () => context.pop(), child: const Text('关闭'))],
     );
@@ -323,33 +360,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
   ));
 
   List<Widget> _loggedInItems(SyncState s) => [
-    // ── 退出登录 + 删除数据 左右对称 ──
-    Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: CardX(
-              child: ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('退出登录', style: TextStyle(fontSize: 14)),
-                onTap: () async { await ref.read(syncNotifierProvider.notifier).logout(); setState(() {}); },
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: CardX(
-              child: ListTile(
-                leading: const Icon(Icons.delete_forever, color: Colors.red),
-                title: const Text('删除数据', style: TextStyle(fontSize: 14, color: Colors.red)),
-                onTap: () => _startDeleteFlow(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
     if (s.lastSyncAt > 0)
       CardX(child: ListTile(leading: const Icon(Icons.history), title: const Text('上次同步'),
         subtitle: Text(s.lastSyncMessage ?? '未知', style: UIs.textGrey))),
@@ -428,8 +438,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         ]),
         _compRow(children: [
           const Expanded(flex: 3, child: Text('加密方式', style: TextStyle(fontSize: 12))),
-          Expanded(flex: 4, child: Text('登录密码\nAES-256-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
-          Expanded(flex: 5, child: Text('备份密码\nAES-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+          Expanded(flex: 4, child: Text('UUID 派生密钥\nAES-256-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
+          Expanded(flex: 5, child: Text('自定义备份密码\nAES-GCM', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.grey.shade600))),
         ]),
         _compRow(children: [
           const Expanded(flex: 3, child: Text('多设备', style: TextStyle(fontSize: 12))),
@@ -453,8 +463,8 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         ]),
         _compRow(children: [
           const Expanded(flex: 3, child: Text('端到端加密', style: TextStyle(fontSize: 12))),
-          const Expanded(flex: 4, child: Text('✅ 密钥在本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.green))),
-          const Expanded(flex: 5, child: Text('❌ 密钥有存储', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.red))),
+          Expanded(flex: 4, child: Text('✅ UUID 派生仅存本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.green))),
+          Expanded(flex: 5, child: Text('❌ 备份密码存于本地', textAlign: TextAlign.center, style: TextStyle(fontSize: 11, color: Colors.red.shade400))),
         ]),
       ]),
     ),
@@ -479,15 +489,15 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           Text('推荐用法', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.amber.shade800)),
         ]),
         const SizedBox(height: 8),
-        _tip('日常多设备同步 → 使用云同步'),
-        _tip('换手机时迁移数据 → 云同步一键下载恢复'),
-        _tip('担心数据丢失 → 定期用 WebDAV/Gist 手动备份'),
-        _tip('两台都可同时使用，互不影响'),
+        _tip('日常多设备同步 → 使用云同步，登录即自动同步'),
+        _tip('换手机迁移数据 → 下载 CBox，登录后一键恢复'),
+        _tip('常规备份 → 云同步已自动加密存储，无需额外操作'),
+        _tip('额外保险 → 内置备份可导出到 WebDAV/Gist/本地'),
         const SizedBox(height: 6),
         Row(children: [
           Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
           const SizedBox(width: 4),
-          Expanded(child: Text('云同步和内置备份使用不同的加密密码，数据格式通用，可以互相转换。',
+          Expanded(child: Text('加密方式不同但互不冲突：云同步用 UUID 派生密钥加密传输，服务端无法解密；内置备份用自定义密码本地加密存储。两者可以同时使用。',
               style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
         ]),
       ]),
