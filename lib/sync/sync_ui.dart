@@ -833,6 +833,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         await SyncConfig.avatarUrl.write(newUrl.$1);
         ref.read(syncNotifierProvider.notifier).refreshProfile();
         if (context.mounted) {
+          context.pop(); // 关闭资料弹窗，让用户重新打开即可看到新头像
           context.showSnackBar('头像上传成功');
           setState(() {});
         }
