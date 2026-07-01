@@ -169,42 +169,44 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     ref.read(syncNotifierProvider.notifier).refreshProfile();
     await context.showRoundDialog(
       title: '个人资料',
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Center(
-          child: Stack(
-            children: [
-              CircleAvatar(
-                radius: 32, backgroundColor: Colors.grey.shade200,
-                backgroundImage: _fullAvatarUrl(s.avatarUrl).isNotEmpty
-                    ? NetworkImage(_fullAvatarUrl(s.avatarUrl)) : null,
-                child: _fullAvatarUrl(s.avatarUrl).isEmpty
-                    ? Icon(Icons.person, size: 28, color: Colors.grey.shade500) : null,
-              ),
-              Positioned(
-                bottom: 0, right: 0,
-                child: GestureDetector(
-                  onTap: () => _pickAndUploadAvatar(s),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      shape: BoxShape.circle,
+      child: Consumer(builder: (context, ref, _) {
+        final live = ref.watch(syncNotifierProvider);
+        return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 32, backgroundColor: Colors.grey.shade200,
+                  backgroundImage: _fullAvatarUrl(live.avatarUrl).isNotEmpty
+                      ? NetworkImage(_fullAvatarUrl(live.avatarUrl)) : null,
+                  child: _fullAvatarUrl(live.avatarUrl).isEmpty
+                      ? Icon(Icons.person, size: 28, color: Colors.grey.shade500) : null,
+                ),
+                Positioned(
+                  bottom: 0, right: 0,
+                  child: GestureDetector(
+                    onTap: () => _pickAndUploadAvatar(live),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
                     ),
-                    child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        UIs.height13,
-        _pRow('用户名', s.username ?? '—'),
-        _pRow('昵称', (s.nickname != null && s.nickname!.isNotEmpty) ? s.nickname! : '未设置'),
-        _pRow('邮箱', s.email ?? '—'),
-        _pRow('邮箱验证', s.emailVerified ? '已验证 ✓' : '未验证',
-            vc: s.emailVerified ? Colors.green : Colors.orange),
-        if (!s.emailVerified && s.email != null && s.email!.isNotEmpty)
-          Padding(
+          UIs.height13,
+          _pRow('用户名', live.username ?? '—'),
+          _pRow('昵称', (live.nickname != null && live.nickname!.isNotEmpty) ? live.nickname! : '未设置'),
+          _pRow('邮箱', live.email ?? '—'),
+          _pRow('邮箱验证', live.emailVerified ? '已验证 ✓' : '未验证',
+              vc: live.emailVerified ? Colors.green : Colors.orange),
+          if (!live.emailVerified && live.email != null && live.email!.isNotEmpty)
+            Padding(
             padding: const EdgeInsets.only(top: 4),
             child: SizedBox(
               width: double.infinity,
@@ -213,7 +215,7 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
                 label: const Text('去验证邮箱', style: TextStyle(fontSize: 12)),
                 onPressed: () {
                   context.pop(); // 关闭资料弹窗
-                  _showVerifyEmailDialog(s);
+                  _showVerifyEmailDialog(live);
                 },
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.orange.shade700,
@@ -222,11 +224,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
               ),
             ),
           ),
-        _pRow('TOTP 双因素', s.totpEnabled ? '已开启 ✓' : '未开启',
-            vc: s.totpEnabled ? Colors.green : Colors.orange.shade400),
+        _pRow('TOTP 双因素', live.totpEnabled ? '已开启 ✓' : '未开启',
+            vc: live.totpEnabled ? Colors.green : Colors.orange.shade400),
         const SizedBox(height: 10),
-        if (!s.totpEnabled) _totpPrompt(),
-        if (s.totpEnabled) _totpEnabled(),
+        if (!live.totpEnabled) _totpPrompt(),
+        if (live.totpEnabled) _totpEnabled(),
         const SizedBox(height: 16),
         const Divider(),
         const SizedBox(height: 8),
@@ -265,9 +267,11 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
             ),
           ),
         ),
-      ]),
-      actions: [TextButton(onPressed: () => context.pop(), child: const Text('关闭'))],
-    );
+      ]);
+    },
+  ),
+  actions: [TextButton(onPressed: () => context.pop(), child: const Text('关闭'))],
+);
   }
 
   Widget _totpPrompt() => Container(
@@ -833,7 +837,6 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
         await SyncConfig.avatarUrl.write(newUrl.$1);
         ref.read(syncNotifierProvider.notifier).refreshProfile();
         if (context.mounted) {
-          context.pop(); // 关闭资料弹窗，让用户重新打开即可看到新头像
           context.showSnackBar('头像上传成功');
           setState(() {});
         }
