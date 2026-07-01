@@ -411,10 +411,28 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
     ]);
   }
 
-  Widget _aboutCard() => CardX(child: ListTile(
-    leading: const Icon(Icons.info_outline), title: const Text('服务端同步'),
-    subtitle: Text('数据端到端加密，服务端无法解密\n服务端地址: ${SyncConfig.serverUrl}',
-        style: UIs.textGrey.copyWith(fontSize: 12)),
+  Widget _aboutCard() => CardX(child: Padding(
+    padding: const EdgeInsets.all(14),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(Icons.info_outline, size: 16, color: Colors.grey.shade500),
+        const SizedBox(width: 6),
+        Text('云同步服务', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+      ]),
+      const SizedBox(height: 8),
+      Text('此功能由 Hermes + deepseek-v4-flash AI 辅助开发。',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade400)),
+      const SizedBox(height: 4),
+      Text('同步数据使用 AES-256-GCM 端到端加密，',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+      Text('加密密钥派生自注册 UUID，仅存于本地设备，',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+      Text('服务端无法解密任何数据。',
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+      const SizedBox(height: 6),
+      Text('服务端地址: ${SyncConfig.serverUrl}',
+          style: TextStyle(fontSize: 11, color: Colors.grey.shade400)),
+    ]),
   ));
 
   // ════════════════════════════════════════════
@@ -489,15 +507,15 @@ final class _ServerSyncPageState extends ConsumerState<ServerSyncPage> {
           Text('推荐用法', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.amber.shade800)),
         ]),
         const SizedBox(height: 8),
-        _tip('日常多设备同步 → 使用云同步，登录即自动同步'),
-        _tip('换手机迁移数据 → 下载 CBox，登录后一键恢复'),
-        _tip('常规备份 → 云同步已自动加密存储，无需额外操作'),
-        _tip('额外保险 → 内置备份可导出到 WebDAV/Gist/本地'),
+        _tip('多设备间同步服务器数据 → 推荐使用云同步'),
+        _tip('换手机迁移 → 云同步一键下载恢复'),
+        _tip('需要本地存档 → 可用内置备份导出到 WebDAV/Gist/本地'),
+        _tip('也可以两者同时使用，互不影响'),
         const SizedBox(height: 6),
         Row(children: [
           Icon(Icons.info_outline, size: 14, color: Colors.grey.shade500),
           const SizedBox(width: 4),
-          Expanded(child: Text('加密方式不同但互不冲突：云同步用 UUID 派生密钥加密传输，服务端无法解密；内置备份用自定义密码本地加密存储。两者可以同时使用。',
+          Expanded(child: Text('云同步和内置备份使用不同的加密方式，数据格式独立。云同步通过 UUID 派生密钥加密传输，内置备份通过自定义密码本地加密。两者可根据需要选用。',
               style: TextStyle(fontSize: 11, color: Colors.grey.shade500))),
         ]),
       ]),
