@@ -392,10 +392,12 @@ class SyncClient {
     final data = resp.data as Map<String, dynamic>?;
     if (data == null) throw SyncException(title: '上传失败', message: '服务器返回为空');
     final url = data['avatar_url'] as String?;
-    if (url == null || url.isEmpty) throw SyncException(
-      title: '上传失败',
-      message: data['detail'] as String? ?? '服务器返回异常，请重试',
-    );
+    if (url == null || url.isEmpty) {
+      throw SyncException(
+        title: '上传失败',
+        message: data['detail'] as String? ?? '服务器返回异常，请重试',
+      );
+    }
     return url;
   }
 

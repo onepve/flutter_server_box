@@ -147,7 +147,7 @@ class _AvatarCropDialogState extends State<AvatarCropDialog> {
                               width: cropSize,
                               height: cropSize,
                               fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) =>
+                              errorBuilder: (_, _, _) =>
                                   const Icon(Icons.broken_image, size: 48),
                             ),
                           ),
